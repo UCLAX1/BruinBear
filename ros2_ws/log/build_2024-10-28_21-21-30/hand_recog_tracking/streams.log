@@ -1,0 +1,26 @@
+[0.351s] Invoking command in '/home/sara/ros2_ws/src/hand_recog_tracking': PYTHONPATH=/home/sara/ros2_ws/build/hand_recog_tracking/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/sara/ros2_ws/install/hand_recog_tracking/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../../build/hand_recog_tracking build --build-base /home/sara/ros2_ws/build/hand_recog_tracking/build install --record /home/sara/ros2_ws/build/hand_recog_tracking/install.log --single-version-externally-managed install_data
+[0.459s] running egg_info
+[0.460s] writing ../../build/hand_recog_tracking/hand_recog_tracking.egg-info/PKG-INFO
+[0.461s] writing dependency_links to ../../build/hand_recog_tracking/hand_recog_tracking.egg-info/dependency_links.txt
+[0.461s] writing entry points to ../../build/hand_recog_tracking/hand_recog_tracking.egg-info/entry_points.txt
+[0.461s] writing requirements to ../../build/hand_recog_tracking/hand_recog_tracking.egg-info/requires.txt
+[0.461s] writing top-level names to ../../build/hand_recog_tracking/hand_recog_tracking.egg-info/top_level.txt
+[0.462s] reading manifest file '../../build/hand_recog_tracking/hand_recog_tracking.egg-info/SOURCES.txt'
+[0.463s] adding license file 'LICENSE'
+[0.463s] writing manifest file '../../build/hand_recog_tracking/hand_recog_tracking.egg-info/SOURCES.txt'
+[0.463s] running build
+[0.463s] running build_py
+[0.464s] copying hand_recog_tracking/handTracking.py -> /home/sara/ros2_ws/build/hand_recog_tracking/build/lib/hand_recog_tracking
+[0.464s] running install
+[0.464s] running install_lib
+[0.465s] copying /home/sara/ros2_ws/build/hand_recog_tracking/build/lib/hand_recog_tracking/handTracking.py -> /home/sara/ros2_ws/install/hand_recog_tracking/lib/python3.10/site-packages/hand_recog_tracking
+[0.466s] byte-compiling /home/sara/ros2_ws/install/hand_recog_tracking/lib/python3.10/site-packages/hand_recog_tracking/handTracking.py to handTracking.cpython-310.pyc
+[0.467s] running install_data
+[0.467s] running install_egg_info
+[0.468s] removing '/home/sara/ros2_ws/install/hand_recog_tracking/lib/python3.10/site-packages/hand_recog_tracking-0.0.0-py3.10.egg-info' (and everything under it)
+[0.468s] Copying ../../build/hand_recog_tracking/hand_recog_tracking.egg-info to /home/sara/ros2_ws/install/hand_recog_tracking/lib/python3.10/site-packages/hand_recog_tracking-0.0.0-py3.10.egg-info
+[0.469s] running install_scripts
+[0.479s] Installing listener script to /home/sara/ros2_ws/install/hand_recog_tracking/lib/hand_recog_tracking
+[0.479s] Installing talker script to /home/sara/ros2_ws/install/hand_recog_tracking/lib/hand_recog_tracking
+[0.480s] writing list of installed files to '/home/sara/ros2_ws/build/hand_recog_tracking/install.log'
+[0.493s] Invoked command in '/home/sara/ros2_ws/src/hand_recog_tracking' returned '0': PYTHONPATH=/home/sara/ros2_ws/build/hand_recog_tracking/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/sara/ros2_ws/install/hand_recog_tracking/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../../build/hand_recog_tracking build --build-base /home/sara/ros2_ws/build/hand_recog_tracking/build install --record /home/sara/ros2_ws/build/hand_recog_tracking/install.log --single-version-externally-managed install_data

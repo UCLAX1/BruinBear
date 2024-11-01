@@ -1,0 +1,4 @@
+[console_scripts]
+listener = hand_recog_tracking.subscriber:main
+talker = hand_recog_tracking.handTracking:main
+

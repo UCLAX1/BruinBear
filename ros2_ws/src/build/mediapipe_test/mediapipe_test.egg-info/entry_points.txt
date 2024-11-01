@@ -1,0 +1,3 @@
+[console_scripts]
+mediapipeTest = mediapipe_test.mediapipeTest
+
