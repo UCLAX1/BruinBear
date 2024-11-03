@@ -1,0 +1,222 @@
+<?xml version='1.0' encoding='utf-8'?>
+<robot name="Quadroped">
+    <link name="Body-v1">
+        <inertial>
+            <origin xyz="0.0 2.5241714164863475e-18 0.0" rpy="0.0 0.0 0.0" />
+            <mass value="28.28466150233067" />
+            <inertia ixx="0.8533001622699443" iyy="0.9026775472629809" izz="0.056913693261835374" ixy="-2.2846506908535957e-17" iyz="0.0" ixz="-1.8277205526828766e-16" />
+        </inertial>
+        <visual name="Body-v1_visual">
+            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
+            <geometry>
+                <mesh filename="meshes/Body-v1.stl" scale="0.001 0.001 0.001" />
+            </geometry>
+        </visual>
+        <collision name="Body-v1_collision">
+            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
+            <geometry>
+                <mesh filename="meshes/Body-v1.stl" scale="0.001 0.001 0.001" />
+            </geometry>
+        </collision>
+    </link>
+    <link name="Lower-leg-1">
+        <inertial>
+            <origin xyz="0.014854892861753068 0.06790021181747809 2.2737367544323207e-14" rpy="0.0 -0.0 0.0" />
+            <mass value="0.4248843755826693" />
+            <inertia ixx="0.001163399349745818" iyy="3.5590752875493126e-05" izz="0.001136105185446424" ixy="-4.18630307997582e-06" iyz="6.522560269672795e-16" ixz="-1.734723475976807e-18" />
+        </inertial>
+        <visual name="Lower-leg-1_visual">
+            <origin xyz="0.020000000000000195 0.06890000000000038 0.0" rpy="-3.141592653589793 1.5707963267948966 0" />
+            <geometry>
+                <mesh filename="meshes/Lower-leg-1.stl" scale="0.001 0.001 0.001" />
+            </geometry>
+        </visual>
+        <collision name="Lower-leg-1_collision">
+            <origin xyz="0.020000000000000195 0.06890000000000038 0.0" rpy="-3.141592653589793 1.5707963267948966 0" />
+            <geometry>
+                <mesh filename="meshes/Lower-leg-1.stl" scale="0.001 0.001 0.001" />
+            </geometry>
+        </collision>
+    </link>
+    <link name="Upper-leg-1">
+        <inertial>
+            <origin xyz="-1.5880630144238238e-14 0.06889999999999996 0.005000000000000036" rpy="0.0 -0.0 0.0" />
+            <mass value="0.4063882488346593" />
+            <inertia ixx="0.0010478475656508172" iyy="3.471342654052731e-05" izz="0.0010757878547107726" ixy="8.673617379884035e-19" iyz="4.336808689942018e-19" ixz="1.734723475976807e-18" />
+        </inertial>
+        <visual name="Upper-leg-1_visual">
+            <origin xyz="0.0 0.06890000000000006 0.010000000000000035" rpy="-3.141592653589793 -0.0 0.0" />
+            <geometry>
+                <mesh filename="meshes/Upper-leg-1.stl" scale="0.001 0.001 0.001" />
+            </geometry>
+        </visual>
+        <collision name="Upper-leg-1_collision">
+            <origin xyz="0.0 0.06890000000000006 0.010000000000000035" rpy="-3.141592653589793 -0.0 0.0" />
+            <geometry>
+                <mesh filename="meshes/Upper-leg-1.stl" scale="0.001 0.001 0.001" />
+            </geometry>
+        </collision>
+    </link>
+    <link name="Upper-leg-2">
+        <inertial>
+            <origin xyz="0.0006636417193790223 -0.06889680384218404 -0.005000000000000071" rpy="0.0 -0.0 0.0" />
+            <mass value="0.4063882488346593" />
+            <inertia ixx="0.0010477535725741246" iyy="3.4807419617220725e-05" izz="0.0010757878547107795" ixy="9.75801004989181e-06" iyz="0.0" ixz="-3.469446951953614e-18" />
+        </inertial>
+        <visual name="Upper-leg-2_visual">
+            <origin xyz="0.0006636417193631416 -0.06889680384218429 -6.217248937900877e-17" rpy="3.141592653589793 2.13872370664345e-18 -3.1319605493618807" />
+            <geometry>
+                <mesh filename="meshes/Upper-leg-2.stl" scale="0.001 0.001 0.001" />
+            </geometry>
+        </visual>
+        <collision name="Upper-leg-2_collision">
+            <origin xyz="0.0006636417193631416 -0.06889680384218429 -6.217248937900877e-17" rpy="3.141592653589793 2.13872370664345e-18 -3.1319605493618807" />
+            <geometry>
+                <mesh filename="meshes/Upper-leg-2.stl" scale="0.001 0.001 0.001" />
+            </geometry>
+        </collision>
+    </link>
+    <link name="Lower-leg-2">
+        <inertial>
+            <origin xyz="0.0048548928617529975 -0.06789705972256062 0.0006540152429947099" rpy="0.0 -0.0 0.0" />
+            <mass value="0.4248843755826693" />
+            <inertia ixx="0.0011633993497458394" iyy="3.569285262070705e-05" izz="0.0011360030857012204" ixy="4.18610888425382e-06" iyz="1.059961408779453e-05" ixz="-4.032228408459851e-08" />
+        </inertial>
+        <visual name="Lower-leg-2_visual">
+            <origin xyz="0.010000000000000071 -0.06889680152655131 0.0006636451580892455" rpy="-1.5707963267948963 -1.561164222566984 1.5707963267948968" />
+            <geometry>
+                <mesh filename="meshes/Lower-leg-2.stl" scale="0.001 0.001 0.001" />
+            </geometry>
+        </visual>
+        <collision name="Lower-leg-2_collision">
+            <origin xyz="0.010000000000000071 -0.06889680152655131 0.0006636451580892455" rpy="-1.5707963267948963 -1.561164222566984 1.5707963267948968" />
+            <geometry>
+                <mesh filename="meshes/Lower-leg-2.stl" scale="0.001 0.001 0.001" />
+            </geometry>
+        </collision>
+    </link>
+    <link name="Upper-leg-3">
+        <inertial>
+            <origin xyz="1.5880630144238238e-14 -0.06889999999999996 0.004999999999999983" rpy="0.0 -0.0 0.0" />
+            <mass value="0.4063882488346593" />
+            <inertia ixx="0.0010478475656508172" iyy="3.471342654052731e-05" izz="0.0010757878547107726" ixy="8.673617379884035e-19" iyz="-4.336808689942018e-19" ixz="0.0" />
+        </inertial>
+        <visual name="Upper-leg-3_visual">
+            <origin xyz="0.0 -0.06890000000000006 0.009999999999999983" rpy="-3.141592653589793 2.719262146893782e-32 3.141592653589793" />
+            <geometry>
+                <mesh filename="meshes/Upper-leg-3.stl" scale="0.001 0.001 0.001" />
+            </geometry>
+        </visual>
+        <collision name="Upper-leg-3_collision">
+            <origin xyz="0.0 -0.06890000000000006 0.009999999999999983" rpy="-3.141592653589793 2.719262146893782e-32 3.141592653589793" />
+            <geometry>
+                <mesh filename="meshes/Upper-leg-3.stl" scale="0.001 0.001 0.001" />
+            </geometry>
+        </collision>
+    </link>
+    <link name="Lower-leg-3">
+        <inertial>
+            <origin xyz="-0.004854892861752926 -0.0679002118174777 2.2737367544323207e-14" rpy="0.0 -0.0 0.0" />
+            <mass value="0.4248843755826693" />
+            <inertia ixx="0.0011633993497458042" iyy="3.559075287547925e-05" izz="0.0011361051854464274" ixy="-4.186303079977555e-06" iyz="-6.557254739192331e-16" ixz="1.734723475976807e-18" />
+        </inertial>
+        <visual name="Lower-leg-3_visual">
+            <origin xyz="-0.010000000000000018 -0.06890000000000003 0.0" rpy="2.220446049250313e-16 1.5707963267948966 0" />
+            <geometry>
+                <mesh filename="meshes/Lower-leg-3.stl" scale="0.001 0.001 0.001" />
+            </geometry>
+        </visual>
+        <collision name="Lower-leg-3_collision">
+            <origin xyz="-0.010000000000000018 -0.06890000000000003 0.0" rpy="2.220446049250313e-16 1.5707963267948966 0" />
+            <geometry>
+                <mesh filename="meshes/Lower-leg-3.stl" scale="0.001 0.001 0.001" />
+            </geometry>
+        </collision>
+    </link>
+    <link name="Upper-leg-4">
+        <inertial>
+            <origin xyz="-1.5880630144238238e-14 0.06889999999999996 -1.7763568394002505e-17" rpy="0.0 -0.0 0.0" />
+            <mass value="0.4063882488346593" />
+            <inertia ixx="0.0010478475656508172" iyy="3.471342654052731e-05" izz="0.0010757878547107726" ixy="8.673617379884035e-19" iyz="4.336808689942018e-19" ixz="0.0" />
+        </inertial>
+        <visual name="Upper-leg-4_visual">
+            <origin xyz="0.0 0.06890000000000006 0.004999999999999983" rpy="3.141592653589793 -0.0 0.0" />
+            <geometry>
+                <mesh filename="meshes/Upper-leg-4.stl" scale="0.001 0.001 0.001" />
+            </geometry>
+        </visual>
+        <collision name="Upper-leg-4_collision">
+            <origin xyz="0.0 0.06890000000000006 0.004999999999999983" rpy="3.141592653589793 -0.0 0.0" />
+            <geometry>
+                <mesh filename="meshes/Upper-leg-4.stl" scale="0.001 0.001 0.001" />
+            </geometry>
+        </collision>
+    </link>
+    <link name="Lower-leg-4">
+        <inertial>
+            <origin xyz="-0.00485489286175298 -0.0679002118174777 2.277289468111121e-14" rpy="0.0 -0.0 0.0" />
+            <mass value="0.4248843755826693" />
+            <inertia ixx="0.0011633993497458112" iyy="3.5590752875500065e-05" izz="0.0011361051854464274" ixy="-4.18630307997582e-06" iyz="-6.591949208711867e-16" ixz="1.734723475976807e-18" />
+        </inertial>
+        <visual name="Lower-leg-4_visual">
+            <origin xyz="-0.010000000000000054 -0.06890000000000003 0.0" rpy="2.220446049250313e-16 1.5707963267948966 0" />
+            <geometry>
+                <mesh filename="meshes/Lower-leg-4.stl" scale="0.001 0.001 0.001" />
+            </geometry>
+        </visual>
+        <collision name="Lower-leg-4_collision">
+            <origin xyz="-0.010000000000000054 -0.06890000000000003 0.0" rpy="2.220446049250313e-16 1.5707963267948966 0" />
+            <geometry>
+                <mesh filename="meshes/Lower-leg-4.stl" scale="0.001 0.001 0.001" />
+            </geometry>
+        </collision>
+    </link>
+    <joint name="Body-v1_Revolute-1" type="continuous">
+        <origin xyz="0.075 0.0 0.265" rpy="-3.141592653589793 -1.5707963267948966 0" />
+        <parent link="Body-v1" />
+        <child link="Upper-leg-1" />
+        <axis xyz="0.0 0.0 1.0" />
+    </joint>
+    <joint name="Upper-leg-1_Revolute-2" type="continuous">
+        <origin xyz="0.0 0.1378 0.0" rpy="-0.0 -1.5707963267948966 0" />
+        <parent link="Upper-leg-1" />
+        <child link="Lower-leg-1" />
+        <axis xyz="1.0 0.0 -0.0" />
+    </joint>
+    <joint name="Body-v1_Revolute-3" type="continuous">
+        <origin xyz="0.075 0.0 -0.265" rpy="-0.0 -1.5707963267948966 0" />
+        <parent link="Body-v1" />
+        <child link="Upper-leg-2" />
+        <axis xyz="0.0 0.0 1.0" />
+    </joint>
+    <joint name="Upper-leg-2_Revolute-4" type="continuous">
+        <origin xyz="0.0013272800000000019 -0.13779361 -0.01" rpy="-0.0 1.5707963267948966 0" />
+        <parent link="Upper-leg-2" />
+        <child link="Lower-leg-2" />
+        <axis xyz="1.0000000000000002 1.734723475976807e-18 0.0" />
+    </joint>
+    <joint name="Body-v1_Revolute-5" type="continuous">
+        <origin xyz="-0.075 0.0 -0.265" rpy="-0.0 -1.5707963267948966 0" />
+        <parent link="Body-v1" />
+        <child link="Upper-leg-3" />
+        <axis xyz="0.0 0.0 1.0" />
+    </joint>
+    <joint name="Upper-leg-3_Revolute-6" type="continuous">
+        <origin xyz="0.0 -0.1378 0.01" rpy="-0.0 1.5707963267948966 0" />
+        <parent link="Upper-leg-3" />
+        <child link="Lower-leg-3" />
+        <axis xyz="1.0 0.0 0.0" />
+    </joint>
+    <joint name="Body-v1_Revolute-7" type="continuous">
+        <origin xyz="-0.08 0.0 0.265" rpy="-3.141592653589793 -1.5707963267948966 0" />
+        <parent link="Body-v1" />
+        <child link="Upper-leg-4" />
+        <axis xyz="0.0 0.0 1.0" />
+    </joint>
+    <joint name="Upper-leg-4_Revolute-8" type="continuous">
+        <origin xyz="0.0 0.1378 -0.005" rpy="-3.141592653589793 -1.5707963267948966 0" />
+        <parent link="Upper-leg-4" />
+        <child link="Lower-leg-4" />
+        <axis xyz="-1.0 0.0 0.0" />
+    </joint>
+</robot>
