@@ -2,6 +2,7 @@ import mujoco as mj
 from mujoco.glfw import glfw
 import numpy as np
 import os
+import time
 
 # xml_path = 'hello.xml' #xml file (assumes this is in the same folder as this file)
 simend = 10 #simulation time
@@ -99,7 +100,7 @@ def scroll(window, xoffset, yoffset):
 # xml_path = abspath
 
 # MuJoCo data structures
-model = mj.MjModel.from_xml_path('/Users/sara/Documents/My-Documents/X1-Robotics/BruinBear/Quadroped-XML/quadroped.xml')  # MuJoCo model
+model = mj.MjModel.from_xml_path('/Users/sara/Documents/My-Documents/X1-Robotics/BruinBear/Quadruped-XML/quadruped.xml')  # MuJoCo model
 data = mj.MjData(model)                # MuJoCo data
 cam = mj.MjvCamera()                        # Abstract camera
 opt = mj.MjvOption()                        # visualization options
@@ -133,16 +134,48 @@ init_controller(model,data)
 
 #set the controller
 mj.set_mjcb_control(controller)
+FRH = mj.mj_name2id(model, mj.mjtObj.mjOBJ_ACTUATOR, 'FR-H-servo')
+FLH = mj.mj_name2id(model, mj.mjtObj.mjOBJ_ACTUATOR, 'FL-H-servo')
+BRH = mj.mj_name2id(model, mj.mjtObj.mjOBJ_ACTUATOR, 'BR-H-servo')
+BLH = mj.mj_name2id(model, mj.mjtObj.mjOBJ_ACTUATOR, 'BL-H-servo')
+
+FRK = mj.mj_name2id(model, mj.mjtObj.mjOBJ_ACTUATOR, 'FR-K-servo')
+FLK = mj.mj_name2id(model, mj.mjtObj.mjOBJ_ACTUATOR, 'FL-K-servo')
+BRK = mj.mj_name2id(model, mj.mjtObj.mjOBJ_ACTUATOR, 'BR-K-servo')
+BLK = mj.mj_name2id(model, mj.mjtObj.mjOBJ_ACTUATOR, 'BL-K-servo')
+
 
 while not glfw.window_should_close(window):
     time_prev = data.time
 
     while (data.time - time_prev < 1.0/60.0):
+        if(abs(data.ctrl[FRH]) < 0.44):
+            data.ctrl[FRH] -=(0.00002/4)
+            data.ctrl[BRH] -=(0.00002/4)
+
+            data.ctrl[FLH] -= (0.00002/4)
+            data.ctrl[BLH] -= (0.00002/4)
+
+        if(abs(data.ctrl[FRK]) < 1):
+            data.ctrl[FRK] += (0.00002/4) 
+            data.ctrl[FLK] += (0.00002/4)
+            data.ctrl[BRK] += (0.00002/4) 
+            data.ctrl[BLK] += (0.00002/4)
+        # data.ctrl[FRH] = -0.44
+        # data.ctrl[FRK] = 1
+        # data.ctrl[FLH] = -0.44
+        # data.ctrl[FLK] = 1
+        # data.ctrl[BRH] = -0.44
+        # data.ctrl[BRK] = 1
+        # data.ctrl[BLH] = -0.44
+        # data.ctrl[BLK] = 1
+        
+        # time.sleep(0.1)
         mj.mj_step(model, data)
 
 
-    if (data.time>=simend):
-        break;
+    # if (data.time>=simend):
+    #     break
 
     # get framebuffer viewport
     viewport_width, viewport_height = glfw.get_framebuffer_size(
