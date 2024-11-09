@@ -12,6 +12,7 @@ class HandPosSub(Node):
         self.subscription  # prevent unused variable warning
 
     def listener_callback(self, msg):
+        print("\033c") # disable if this causes problems, just clears the terminal
         self.get_logger().info('I heard: "%s"' % msg.data)
 
 

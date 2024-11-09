@@ -1,2 +1,7 @@
 .Spotline-V100
+.idea/
+log/
+install/
+build/
+.vscode/
 venv/

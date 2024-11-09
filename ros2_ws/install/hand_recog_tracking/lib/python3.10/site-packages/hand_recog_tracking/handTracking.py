@@ -275,6 +275,7 @@ class JointPositionPublisher(Node):
     msg = String()
     msg.data = str(jointPostion)
     self.publisher_.publish(msg)
+    print("\033c") # disable if this causes problems, just clears the terminal
     self.get_logger().info('Center Joint Position: "%s"' % msg.data)
 
 
@@ -291,7 +292,6 @@ class RecognitionResultPublisher(Node):
     msg.data = str(recognitionResult)
     self.publisher_.publish(msg)
     self.get_logger().info('Recognition Result: "%s"' % msg.data)
-
 
 
 if __name__ == '__main__':
