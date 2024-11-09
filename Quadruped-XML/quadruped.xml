@@ -7,7 +7,7 @@
 
     <!-- Settings -->
     <option timestep = "1e-4"/> 
-    <option gravity="0 0 -1.00"/>
+    <option gravity="0 0 -9.81"/>
 
 
 

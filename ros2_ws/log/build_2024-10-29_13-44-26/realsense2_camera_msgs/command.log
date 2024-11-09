@@ -1,2 +1,0 @@
-Invoking command in '/home/sara/ros2_ws/build/realsense2_camera_msgs': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake /home/sara/ros2_ws/src/realsense-ros/realsense2_camera_msgs -DCMAKE_INSTALL_PREFIX=/home/sara/ros2_ws/install/realsense2_camera_msgs
-Invoked command in '/home/sara/ros2_ws/build/realsense2_camera_msgs' returned '1': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake /home/sara/ros2_ws/src/realsense-ros/realsense2_camera_msgs -DCMAKE_INSTALL_PREFIX=/home/sara/ros2_ws/install/realsense2_camera_msgs

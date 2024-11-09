@@ -19,7 +19,7 @@ button_right = False
 lastx = 0
 lasty = 0
 
-modelPath = 'Quadroped-XML/quadroped.xml'
+modelPath = '/home/sara/git_projects/BruinBear/Quadruped-XML/quadruped.xml'
 displayRefreshRate = 120
 
 class ActuatorPositionPub(Node):

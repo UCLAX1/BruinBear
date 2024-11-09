@@ -1,5 +1,0 @@
-[console_scripts]
-poslistener = hand_recog_tracking.handPosSub:main
-recoglistener = hand_recog_tracking.handRecogSub:main
-talker = hand_recog_tracking.handTracking:main
-
