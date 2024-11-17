@@ -15,3 +15,5 @@ plt.show()
 
 # Access the trajectory position values at each time step
 print(trajectory.q)
+
+# changes
