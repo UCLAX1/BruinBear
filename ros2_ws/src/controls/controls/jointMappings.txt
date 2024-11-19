@@ -1,0 +1,16 @@
+mapping of indeces to joints (for reference):
+
+0 FLH
+1 FRH
+2 BRH
+3 BLH
+
+4 FLK
+5 FRK
+6 BRK
+7 BLK
+
+8 FLR
+9 FRR
+10 BRR
+11 BLR
