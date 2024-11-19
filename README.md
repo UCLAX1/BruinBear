@@ -3,7 +3,7 @@
 ### to setup:
 
 ````
-cd ros2_ws <br/>
+cd ros2_ws
 chmod +x run_controls.sh
 ````
 
