@@ -172,7 +172,7 @@ globalRobotState = 'start'
 globalHipStatus = 'not moving'
 globalKneeStatus = 'not moving'
 startedWalking = False
-motorSpeed = 0.0002
+motorSpeed = 0.0009
 
 
 
@@ -189,23 +189,23 @@ def calcActRotation(tx, ty, backLeg):
         th3 = np.pi/2 + th2
     else:
         th3 = np.arctan(ty/tx) + th2
-    if abs(th3) < 0.0001:
-        th3 = np.pi
+    # if abs(th3) < 0.0001:
+    #     th3 = np.pi
 
     if tx < 0:
         th3 += np.deg2rad(90)
     else:
         th3 -= np.deg2rad(90)
     if backLeg:
-        th1 += np.deg2rad(90)
+        th1 += np.deg2rad(200)
         # th3 *= 1.2
     th1 = np.pi - th1
     if th3 <= (np.pi/2):
         if th3 > 0:
             th3 *= -1
     if backLeg:
-        th3 *= -0.8
-        # th1 *= 1.1
+        th3 *= -1
+        th1 *= 1
     return th1, th3
 
 def moveLeg(actuator, position, actType, backLeg):
@@ -288,11 +288,11 @@ def neutralPos():
         moveLeg(FRH, [positionTargetX,positionTargetY],'hip', False)
         moveLeg(FRK, [positionTargetX,positionTargetY],'knee', False)
 
-        moveLeg(BLH, [positionTargetX *2,positionTargetY],'hip', True)
-        moveLeg(BLK, [positionTargetX *2,positionTargetY],'knee', True)
+        moveLeg(BLH, [-positionTargetX,positionTargetY],'hip', True)
+        moveLeg(BLK, [-positionTargetX,positionTargetY],'knee', True)
 
-        moveLeg(BRH, [positionTargetX *2,positionTargetY],'hip', True)
-        moveLeg(BRK, [positionTargetX *2,positionTargetY],'knee', True)
+        moveLeg(BRH, [-positionTargetX,positionTargetY],'hip', True)
+        moveLeg(BRK, [-positionTargetX,positionTargetY],'knee', True)
         if globalHipStatus == 'not moving' and globalKneeStatus =='not moving':
             globalRobotState = 'finished'
     elif globalRobotState == 'finished' or globalRobotState == 'start':
@@ -303,10 +303,11 @@ def pushUp():
 
 
 walkCounter = 0
-walkingPosX = 0.08
-walkingLiftPosX = 0.04
-walkingPosY = 0.3
-walkingLiftPosY = 0.26
+walkingPosX = 0.06
+walkingLiftPosX = 0.03
+walkingPosY = 0.22
+walkingLiftPosY = 0.17
+rearOffset = 0.0
 class RobotStateMachine:
     walkCounter = 0
     def __init__(self):
@@ -314,22 +315,18 @@ class RobotStateMachine:
         self.direction = 1  # Set to 1 for forward, -1 for backward
 
     def step(self):
+        print(self.state)
         if (self.state == 'get neutral'):
-            print("moving to neutral")
             self.neutralPos()
         elif self.state == 'INIT':
-            print("Starting sequence: Lifting FR BL")
             self.FL_BR_Drop(-self.direction)
             self.FR_BL_Lift(self.direction)
         elif self.state == 'FR_BL Lifted':
-            print("Transitioning to: Dropping FR BL")
             self.FR_BL_Drop(self.direction)
         elif self.state == 'FR_BL Dropped':
-            print("Transitioning to: Lifting FL BR")
             self.FR_BL_Drop(-self.direction)
             self.FL_BR_Lift(self.direction)
         elif self.state == 'FL_BR Lifted':
-            print("Transitioning to: Dropping FL BR")
             self.FL_BR_Drop(self.direction)
         elif self.state == 'FL_BR Dropped':
             print("Sequence complete: Resetting to INIT")
@@ -356,51 +353,51 @@ class RobotStateMachine:
 
 
     def FR_BL_Lift(self, d):
-        global walkingLiftPosX, walkingLiftPosY
+        global walkingLiftPosX, walkingLiftPosY, rearOffset
         moveLeg(FRK, [walkingLiftPosX * d, walkingLiftPosY], 'knee', False)
         moveLeg(FRH, [walkingLiftPosX * d, walkingLiftPosY], 'hip', False)
-        moveLeg(BLK, [walkingLiftPosX * -d, walkingLiftPosY], 'knee', True)
-        moveLeg(BLH, [walkingLiftPosX * -d, walkingLiftPosY], 'hip', True)
+        moveLeg(BLK, [walkingLiftPosX * -d, walkingLiftPosY+ rearOffset], 'knee', True)
+        moveLeg(BLH, [walkingLiftPosX * -d, walkingLiftPosY+ rearOffset], 'hip', True)
         
         if self.check_position(FRK, 'knee', walkingLiftPosX * d, walkingLiftPosY, False) \
-                and self.check_position(BLK, 'knee', walkingLiftPosX * -d, walkingLiftPosY, True):
+                and self.check_position(BLK, 'knee', walkingLiftPosX * -d, walkingLiftPosY+ rearOffset, True):
             self.state = 'FR_BL Lifted'
 
     def FR_BL_Drop(self, d):
-        global walkingPosX, walkingPosY
+        global walkingPosX, walkingPosY, rearOffset
         moveLeg(FRK, [walkingPosX * d, walkingPosY], 'knee', False)
         moveLeg(FRH, [walkingPosX * d, walkingPosY], 'hip', False)
-        moveLeg(BLK, [walkingPosX * -d, walkingPosY], 'knee', True)
-        moveLeg(BLH, [walkingPosX * -d, walkingPosY], 'hip', True)
+        moveLeg(BLK, [walkingPosX * -d, walkingPosY+ rearOffset], 'knee', True)
+        moveLeg(BLH, [walkingPosX * -d, walkingPosY+ rearOffset], 'hip', True)
         
         if self.check_position(FRK, 'knee', walkingPosX * d, walkingPosY, False) \
-                and self.check_position(BLK, 'knee', walkingPosX * -d, walkingPosY, True):
+                and self.check_position(BLK, 'knee', walkingPosX * -d, walkingPosY+ rearOffset, True):
             self.state = 'FR_BL Dropped'
 
 
     def FL_BR_Lift(self, d):
-        global walkingLiftPosX, walkingLiftPosY
+        global walkingLiftPosX, walkingLiftPosY, rearOffset
         moveLeg(FLK, [walkingLiftPosX * d, walkingLiftPosY], 'knee', False)
         moveLeg(FLH, [walkingLiftPosX * d, walkingLiftPosY], 'hip', False)
-        moveLeg(BRK, [walkingLiftPosX * -d, walkingLiftPosY], 'knee', True)
-        moveLeg(BRH, [walkingLiftPosX * -d, walkingLiftPosY], 'hip', True)
+        moveLeg(BRK, [walkingLiftPosX * -d, walkingLiftPosY+ rearOffset], 'knee', True)
+        moveLeg(BRH, [walkingLiftPosX * -d, walkingLiftPosY+ rearOffset], 'hip', True)
         
         if self.check_position(FLK, 'knee', walkingLiftPosX * d, walkingLiftPosY, False) \
-                and self.check_position(BRK, 'knee', walkingLiftPosX * -d, walkingLiftPosY, True):
+                and self.check_position(BRK, 'knee', walkingLiftPosX * -d, walkingLiftPosY + rearOffset, True):
             self.state = 'FL_BR Lifted'
 
     def FL_BR_Drop(self, d):
         # global walkingPosStatus
-        global walkingPosX, walkingPosY
+        global walkingPosX, walkingPosY, rearOffset
         # if walkingPosStatus == 'FL BR Lifted' or walkingPosStatus == 'Dropping FL BR' or walkingPosStatus == 'none':
             # walkingPosStatus = 'Dropping FL BR'
         moveLeg(FLK, [walkingPosX * d, walkingPosY], 'knee', False)
         moveLeg(FLH, [walkingPosX * d, walkingPosY], 'hip', False)
-        moveLeg(BRK, [walkingPosX * -d, walkingPosY], 'knee', True)
-        moveLeg(BRH, [walkingPosX * -d, walkingPosY], 'hip', True)
+        moveLeg(BRK, [walkingPosX * -d, walkingPosY+ rearOffset], 'knee', True)
+        moveLeg(BRH, [walkingPosX * -d, walkingPosY+ rearOffset], 'hip', True)
         
         if self.check_position(FLK, 'knee', walkingPosX * d, walkingPosY, False) \
-                and self.check_position(BRK, 'knee', walkingPosX * -d, walkingPosY, True):
+                and self.check_position(BRK, 'knee', walkingPosX * -d, walkingPosY + rearOffset, True):
             # walkingPosStatus = 'FL BR Dropped'
             self.state = 'FL_BR Dropped'
 
@@ -466,8 +463,8 @@ while not glfw.window_should_close(window):
     cam.lookat = [robot_x, robot_y, 0.2]
 
     cam.distance = 2  # Adjust this distance as needed
-    cam.azimuth = 45   # Keep or modify this for different angles
-    cam.elevation = -35 # Adjust the elevation if necessary
+    cam.azimuth = 0   # Keep or modify this for different angles
+    cam.elevation = 0# Adjust the elevation if necessary
     # Update scene and render
     mj.mjv_updateScene(model, data, opt, None, cam,
                        mj.mjtCatBit.mjCAT_ALL.value, scene)
