@@ -1,10 +1,31 @@
-from roboticstoolbox import quintic
+from roboticstoolbox import mstraj
+import numpy as np
+import matplotlib.pyplot as plt
 
-tg = quintic(1, 2, 10)
+# Define the via points (trajectory waypoints)
+viapoints = np.array([[-100, 0], [-50, 30], [0, 50], [50, 30], [100, 0], [50, 0], [0, 0], [-50, 0], [-100, 0]])
 
-print(tg.q)
+# Generate the trajectory (using quintic polynomial interpolation)
+# have lesser acceleration are start and endpoints
+tg1 = mstraj(viapoints, 1, 1, 5)
 
-tg.plot()
+# Extract the positions (q) from the trajectory
+positions = tg1.q  # This contains x, y positions as columns
+
+# Extract x and y positions from the trajectory data
+x_positions = positions[:, 0]  # First column contains x coordinates
+y_positions = positions[:, 1]  # Second column contains y coordinates
+
+# Plot x vs y (2D trajectory plot)
+plt.figure(figsize=(8, 6))
+plt.plot(x_positions, y_positions, marker='o', linestyle='-', color='b')
+plt.title("Trajectory in X-Y Plane")
+plt.xlabel("X Position")
+plt.ylabel("Y Position")
+plt.grid(True)
+plt.gca().set_aspect('equal', adjustable='box')  # Ensure equal scaling for both axes
+plt.show()
+
 
 
 
