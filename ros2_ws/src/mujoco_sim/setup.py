@@ -20,7 +20,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'sim = mujoco_sim.sim'
+            'sim = mujoco_sim.sim',
+            'sim2 = mujoco_sim.sim_rework'
         ],
     },
 )

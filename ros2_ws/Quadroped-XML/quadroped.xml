@@ -6,7 +6,7 @@
     <compiler angle="radian" />
 
     <!-- Settings -->
-    <option timestep = "1e-4"/> 
+    <option timestep = "0.001" integrator="Euler" /> 
     <option gravity="0 0 -9.80"/>
 
 
@@ -26,12 +26,12 @@
         <!-- World Files -->
         <texture type="skybox" builtin="gradient" rgb1=".3 .5 .7" rgb2="0 0 0" width="32" height="512"/>
         <texture name="grid" type="2d" builtin="checker" width="512" height="512" rgb1=".1 .2 .3" rgb2=".2 .3 .4"/>
-        <material name="grid" texture="grid" texrepeat="1 1" texuniform="true" reflectance=".0"/>
+        <material name="grid" texture="grid" texrepeat="1 1" texuniform="true" reflectance=".3"/>
     </asset>
 
     <worldbody>
         <!-- World Plane -->
-        <geom name="floor" size="0 0 .05" type="plane" material="grid" friction = "0.1 0.005 0.0001"/>
+        <geom name="floor" size="0 0 .05" type="plane" material="grid" friction = "0.8 0.005 0.0001"/>
         <light name="spotlight" mode="targetbodycom" target="Body-v1" diffuse=".8 .8 .8" specular="0.3 0.3 0.3" pos="0 -6 4" cutoff="30"/>
         <light name="top" pos="0 0 2" mode="trackcom"/>
 
