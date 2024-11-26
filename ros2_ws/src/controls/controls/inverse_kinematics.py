@@ -4,44 +4,30 @@ import matplotlib.pyplot as plt
 r1 = 0.177
 r2 = 0.177
 
-def solveIK(tx, ty, backLeg=False):
+def solveIK(t, backLeg=False):
     # The shoulder is at the origin and the target position is defined as being in the 3rd or 4th quadrants
-    tx = tx
-    ty = ty
+    tx = t[0]
+    ty = t[1]
     dT = np.sqrt(tx**2 + ty**2)
-    th1 = np.arccos((r1**2 + r2**2 - dT**2)/(2 * r1 * r2))
-    th2 = np.arccos((r1**2 + dT**2 - r2**2)/(2 * r1 * dT))
-    if tx == 0:
-        th3 = np.pi/2 + th2
-    else:
-        th3 = np.arctan(ty/tx) + th2
-    # if abs(th3) < 0.0001:
-    #     th3 = np.pi
+    kneeHipPaw = np.arccos((r1**2 + dT**2 - r2**2)/(2 * r1 * dT))
+    pawKneeHip = np.arccos((r1**2 + r2**2 - dT**2)/(2 * r1 * r2))
+    print('pawKneeHip', np.rad2deg(pawKneeHip))
+    print('kneeHipPaw', np.rad2deg(kneeHipPaw))
 
-    if tx < 0:
-        th3 += np.deg2rad(90)
-    else:
-        th3 -= np.deg2rad(90)
-    # if backLeg:
-    #     th1 += np.deg2rad(202)
-    #     # th1 += (180 - th3)
-    #     # th3 *= 1.2
-    # # th1 = np.pi - th1
-    if th3 <= (np.pi/2):
-        if th3 > 0:
-            th3 *= -1
+
+    hip = np.arctan(-tx/ty) - kneeHipPaw
+    knee = np.pi - pawKneeHip
+
     if backLeg:
-        th3 *= -1
-        th1 -= np.pi
-        # th1 *= 2
-        # th1 -= (th3 - (np.pi/2))
-        print(th3)
-        print(th1)
+        hip = np.arctan(-tx/ty) + kneeHipPaw
+        knee = - np.pi + pawKneeHip
     else:
-        th1 = np.pi - th1
-    return th1, th3
+        hip = np.arctan(-tx/ty) - kneeHipPaw
+        knee = np.pi - pawKneeHip
+        
+    return hip, knee
 
-def plotLeg(theta1, theta2):
+def plotLeg(theta1, theta2, target):
     """
     Plots the leg configuration based on joint angles.
     
@@ -52,14 +38,15 @@ def plotLeg(theta1, theta2):
     
     # Joint positions
     hip = np.array([0, 0])  # Hip at the origin
-    knee = hip + np.array([r1 * np.cos(theta1), r1 * np.sin(theta1)])
-    foot = knee + np.array([r2 * np.cos(theta1 + theta2), r2 * np.sin(theta1 + theta2)])
+    knee = hip + np.array([r1 * np.sin(theta1), -r1 * np.cos(theta1)])
+    foot = knee + np.array([r2 * np.sin(theta1 + theta2), -r2 * np.cos(theta1 + theta2)])
     
     # Plot the leg
     plt.figure(figsize=(6, 6))
     plt.plot([hip[0], knee[0]], [hip[1], knee[1]], 'bo-', label="Femur")
     plt.plot([knee[0], foot[0]], [knee[1], foot[1]], 'ro-', label="Tibia")
     plt.scatter(*hip, color='black', label='Hip (Origin)')
+    plt.scatter(*target, color='yellow', label='target')
     plt.scatter(*foot, color='green', label='End-Effector (Foot)')
     
     # Annotate angles
@@ -86,12 +73,12 @@ def main():
         y = float(input("Enter the y-coordinate of the end-effector target position (m): "))
         
         # Calculate joint angles
-        theta1, theta2 = solveIK(x, y)
+        theta1, theta2 = solveIK([x,y])
         print(f"Hip joint angle (θ1): {np.degrees(theta1):.2f}°")
         print(f"Knee joint angle (θ2): {np.degrees(theta2):.2f}°")
         
-        # Plot the leg
-        plotLeg(theta1, theta2)
+        # Plot the leg,
+        plotLeg(theta1, theta2, [x,y])
     except ValueError as e:
         print(f"Error: {e}")
     except Exception as e:
