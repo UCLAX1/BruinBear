@@ -5,6 +5,6 @@ venv/
 log/
 install/
 build/
-
+MUJOCO_LOG.TXT
 .vscode/
 venv/
