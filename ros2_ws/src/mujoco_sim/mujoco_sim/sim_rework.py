@@ -223,19 +223,6 @@ def moveLeg(actuator, position, actType, backLeg):
 
     hipRotTarg = calcActRotation(xPos,yPos, backLeg)[1]
     kneeRotTarg = calcActRotation(xPos,yPos, backLeg)[0]
-    # kneeRotTarg = np.pi - kneeRotTarg
-
-    # if hipRotTarg <= (np.pi/2):
-    #     if hipRotTarg > 0:
-    #         # print(str(actuator))
-    #         # print(str(hipRotTarg))
-    #         hipRotTarg *= -1
-    #         # exit()
-    #     # else:
-    #     #     kneeRotTarg *= -1
-    # if backLeg:
-    #     hipRotTarg *= -0.7
-    #     kneeRotTarg *= 0.7
     
     if actType == 'hip':
         if hipRotTarg < data.ctrl[actuator]:
