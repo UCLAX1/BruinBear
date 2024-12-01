@@ -169,8 +169,6 @@ rclpy.init()
 actuatorPositionNode = ActuatorPositionPub()
 counter = 0
 globalRobotState = 'start'
-globalHipStatus = 'not moving'
-globalKneeStatus = 'not moving'
 startedWalking = False
 motorSpeed = 0.001
 
@@ -299,8 +297,8 @@ def pushUp():
 walkCounter = 0
 walkingPosX = 0.02
 walkingLiftPosX = walkingPosX/2
-walkingPosY = 0.3
-walkingLiftPosY = 0.29
+walkingPosY = 0.34
+walkingLiftPosY = 0.33
 rearOffset = 0.0
 class RobotStateMachine:
     walkCounter = 0
@@ -328,8 +326,8 @@ class RobotStateMachine:
             self.state = 'INIT'  # Reset or set up for next step
 
     def neutralPos(self):
-        positionTargetX = 0.1
-        positionTargetY = 0.3
+        positionTargetX = 0.02
+        positionTargetY = 0.34
         moveLeg(FLH, [positionTargetX,positionTargetY],'hip', False)
         moveLeg(FLK, [positionTargetX,positionTargetY],'knee', False)
 
