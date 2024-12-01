@@ -300,7 +300,7 @@ walkCounter = 0
 walkingPosX = 0.02
 walkingLiftPosX = walkingPosX/2
 walkingPosY = 0.3
-walkingLiftPosY = 0.28
+walkingLiftPosY = 0.29
 rearOffset = 0.0
 class RobotStateMachine:
     walkCounter = 0
@@ -457,7 +457,7 @@ while not glfw.window_should_close(window):
     cam.lookat = [robot_x, robot_y, 0.2]
 
     cam.distance = 2  # Adjust this distance as needed
-    cam.azimuth = -90   # Keep or modify this for different angles
+    cam.azimuth = 45   # Keep or modify this for different angles
     cam.elevation = -35 # Adjust the elevation if necessary
     # Update scene and render
     mj.mjv_updateScene(model, data, opt, None, cam,

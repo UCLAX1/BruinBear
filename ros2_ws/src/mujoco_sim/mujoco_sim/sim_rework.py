@@ -328,23 +328,21 @@ class RobotStateMachine:
             self.state = 'INIT'  # Reset or set up for next step
 
     def neutralPos(self):
-        # positionTargetX = 0.08
-        # positionTargetY = 0.3
-        positionTargetX = 0
-        positionTargetY = 0
+        positionTargetX = 0.1
+        positionTargetY = 0.3
         moveLeg(FLH, [positionTargetX,positionTargetY],'hip', False)
         moveLeg(FLK, [positionTargetX,positionTargetY],'knee', False)
 
         moveLeg(FRH, [positionTargetX,positionTargetY],'hip', False)
         moveLeg(FRK, [positionTargetX,positionTargetY],'knee', False)
 
-        moveLeg(BLH, [positionTargetX *2,positionTargetY],'hip', True)
-        moveLeg(BLK, [positionTargetX *2,positionTargetY],'knee', True)
+        moveLeg(BLH, [positionTargetX,positionTargetY],'hip', True)
+        moveLeg(BLK, [positionTargetX,positionTargetY],'knee', True)
 
-        moveLeg(BRH, [positionTargetX *2,positionTargetY],'hip', True)
-        moveLeg(BRK, [positionTargetX *2,positionTargetY],'knee', True)
+        moveLeg(BRH, [positionTargetX,positionTargetY],'hip', True)
+        moveLeg(BRK, [positionTargetX,positionTargetY],'knee', True)
         if self.check_position(FRK, 'knee', positionTargetX, positionTargetY, False) \
-                and self.check_position(BRK, 'knee', positionTargetX *2, positionTargetY, True):
+                and self.check_position(BRK, 'knee', positionTargetX, positionTargetY, True):
             self.state = 'INIT'
 
 
@@ -427,8 +425,8 @@ while not glfw.window_should_close(window):
 
         counter += 1
         # robotFSM.step()
-        # robot_fsm.step()
-        robot_fsm.neutralPos()
+        robot_fsm.step()
+        # robot_fsm.neutralPos()
         
         if counter % 100 == 0:
             pass
