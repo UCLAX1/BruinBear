@@ -1,7 +1,10 @@
 from setuptools import find_packages, setup
 from glob import glob
+import sys
 
 package_name = 'controls'
+sys.path.insert(0, "/home/sara/venv/lib/python3.10/site-packages")
+
 
 setup(
     name=package_name,

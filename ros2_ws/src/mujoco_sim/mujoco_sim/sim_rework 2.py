@@ -19,7 +19,7 @@ button_right = False
 lastx = 0
 lasty = 0
 
-modelPath = 'ros2_ws/Quadroped-XML/quadroped_og.xml'
+modelPath = 'ros2_ws/quadruped-new/quadruped.xml'
 displayRefreshRate = 120
 
 class ActuatorPositionPub(Node):
@@ -177,8 +177,8 @@ motorSpeed = 0.001
 
 
 def calcActRotation(tx, ty, backLeg):
-    r1 = 0.177
-    r2 = 0.177
+    r1 = 0.22532
+    r2 = 0.199678
     # The shoulder is at the origin and the target position is defined as being in the 3rd or 4th quadrants
     tx = tx
     ty = ty
@@ -328,8 +328,6 @@ class RobotStateMachine:
             self.state = 'INIT'  # Reset or set up for next step
 
     def neutralPos(self):
-        # positionTargetX = 0.08
-        # positionTargetY = 0.3
         positionTargetX = 0
         positionTargetY = 0
         moveLeg(FLH, [positionTargetX,positionTargetY],'hip', False)
