@@ -42,13 +42,32 @@ class RealSenseNode(Node):
 
             # Convert depth frame to a numpy array
             depth_image = np.asanyarray(depth_frame.get_data())
+            min_index = np.argmin(depth_image)
+            min_distance = depth_image(min_index)
+
+            lowest_point = 'none'
+            if min_index[1] < depth_image.shape[1]/2:
+                lowest_point = 'bottom'
+            else:
+                lowest_point = 'top'
+            if min_index[0] < depth_image.shape[0]/2:
+                lowest_point += ' left'
+            else:
+                lowest_point += ' right'
+
+           
+
             center_point_depth = depth_image[depth_image.shape[0]//2, depth_image.shape[1]//2]
+
 
 
             # Create a ROS Image message using cv_bridge
             depth_msg = self.bridge.cv2_to_imgmsg(depth_image, encoding='16UC1')
             self.publisher.publish(depth_msg)
-            self.get_logger().info("Published depth image. Depth @ center: " + str(center_point_depth) + 'mm')
+            
+            # self.get_logger().info("Published depth image. Depth @ center: " + str(center_point_depth) + 'mm')
+
+            self.get_logger().info("Published depth image. Lowest Point: " + lowest_point + ' ' + str(min_distance))
         except Exception as e:
             self.get_logger().error(f"Error publishing depth image: {e}")
 
