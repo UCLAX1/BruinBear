@@ -1,31 +1,49 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-r1 = 0.177
-r2 = 0.177
+r1 = 0.180
+r2 = 0.199678
 
 def solveIK(t, backLeg=False):
-    # The shoulder is at the origin and the target position is defined as being in the 3rd or 4th quadrants
-    tx = t[0]
+    # # The shoulder is at the origin and the target position is defined as being in the 3rd or 4th quadrants
+    r1 = .180
+    r2 = .199678
+    tx = t[0] * -1
     ty = t[1]
-    dT = np.sqrt(tx**2 + ty**2)
+    # tz = t[3]
+    tz = 0 # need to provide a 3-rd degree as part of t
+
+    dT = np.srt(tx**2 + ty**2 + tz**2)
     kneeHipPaw = np.arccos((r1**2 + dT**2 - r2**2)/(2 * r1 * dT))
     pawKneeHip = np.arccos((r1**2 + r2**2 - dT**2)/(2 * r1 * r2))
-    print('pawKneeHip', np.rad2deg(pawKneeHip))
-    print('kneeHipPaw', np.rad2deg(kneeHipPaw))
+    # print('pawKneeHip', np.rad2deg(pawKneeHip))
+    # print('kneeHipPaw', np.rad2deg(kneeHipPaw))
 
 
-    hip = np.arctan(-tx/ty) - kneeHipPaw
+    hip = np.arccos(-tx/dT) - kneeHipPaw
+    # print(np.arctan(-tx/(ty)))
+    # print((np.arccos((-tx)/dT) - np.pi/2) * -1)
+
     knee = np.pi - pawKneeHip
 
     if backLeg:
-        hip = np.arctan(-tx/ty) + kneeHipPaw
+        hip = (((np.arccos((-tx)/dT) - np.pi/2)) + kneeHipPaw)
         knee = - np.pi + pawKneeHip
     else:
-        hip = np.arctan(-tx/ty) - kneeHipPaw
+        hip = (((np.arccos((-tx)/dT) - np.pi/2) * -1) - kneeHipPaw)
         knee = np.pi - pawKneeHip
-        
-    return hip, knee
+    
+    phi = np.arccos(ty/dT)
+    if(tz < 0):
+        phi *= -1
+
+
+    # print(np.rad2deg(knee))
+    if knee > np.deg2rad(60):
+        print('out of range')
+    # print("phi: " + str(phi))
+    return knee, hip, phi
+
 
 def plotLeg(theta1, theta2, target):
     """
