@@ -160,10 +160,16 @@ FLH = mj.mj_name2id(model, mj.mjtObj.mjOBJ_ACTUATOR, 'FL-H-servo')
 BRH = mj.mj_name2id(model, mj.mjtObj.mjOBJ_ACTUATOR, 'BR-H-servo')
 BLH = mj.mj_name2id(model, mj.mjtObj.mjOBJ_ACTUATOR, 'BL-H-servo')
 
+
 FRK = mj.mj_name2id(model, mj.mjtObj.mjOBJ_ACTUATOR, 'FR-K-servo')
 FLK = mj.mj_name2id(model, mj.mjtObj.mjOBJ_ACTUATOR, 'FL-K-servo')
 BRK = mj.mj_name2id(model, mj.mjtObj.mjOBJ_ACTUATOR, 'BR-K-servo')
 BLK = mj.mj_name2id(model, mj.mjtObj.mjOBJ_ACTUATOR, 'BL-K-servo')
+
+FRR = mj.mj_name2id(model, mj.mjtObj.mjOBJ_ACTUATOR, 'FR-R-servo')
+FLR = mj.mj_name2id(model, mj.mjtObj.mjOBJ_ACTUATOR, 'FL-R-servo')
+BRR = mj.mj_name2id(model, mj.mjtObj.mjOBJ_ACTUATOR, 'BR-R-servo')
+BLR = mj.mj_name2id(model, mj.mjtObj.mjOBJ_ACTUATOR, 'BL-R-servo')
 
 rclpy.init()
 actuatorPositionNode = ActuatorPositionPub()
@@ -173,54 +179,45 @@ startedWalking = False
 motorSpeed = 0.001
 
 
+def calcActRotation(tx, ty, tz, backleg):
+    r1 = .180
+    r2 = .199678
+    tx *= -1
 
-def calcActRotation(tx, ty, backLeg):
-    r1 = 0.180
-    r2 = 0.199678
-    # The shoulder is at the origin and the target position is defined as being in the 3rd or 4th quadrants
-    tx = tx
-    ty = ty
-    dT = np.sqrt(tx**2 + ty**2)
-    th1 = np.arccos((r1**2 + r2**2 - dT**2)/(2 * r1 * r2))
-    th2 = np.arccos((r1**2 + dT**2 - r2**2)/(2 * r1 * dT))
-    if tx == 0:
-        th3 = np.pi/2 + th2
-    else:
-        th3 = np.arctan(ty/tx) + th2
-    # if abs(th3) < 0.0001:
-    #     th3 = np.pi
+    dT = np.sqrt(tx**2 + ty**2 + tz**2)
+    kneeHipPaw = np.arccos((r1**2 + dT**2 - r2**2)/(2 * r1 * dT))
+    pawKneeHip = np.arccos((r1**2 + r2**2 - dT**2)/(2 * r1 * r2))
+    print('pawKneeHip', np.rad2deg(pawKneeHip))
+    print('kneeHipPaw', np.rad2deg(kneeHipPaw))
 
-    if tx < 0:
-        th3 += np.deg2rad(90)
+
+    hip = np.arccos(-tx/dT) - kneeHipPaw
+    print(np.arctan(-tx/(ty)))
+    print((np.arccos((-tx)/dT) - np.pi/2) * -1)
+
+    knee = np.pi - pawKneeHip
+
+    if backleg:
+        hip = (((np.arccos((-tx)/dT) - np.pi/2) * -1) + kneeHipPaw)
+        knee = - np.pi + pawKneeHip
     else:
-        th3 -= np.deg2rad(90)
-    # if backLeg:
-    #     th1 += np.deg2rad(202)
-    #     # th1 += (180 - th3)
-    #     # th3 *= 1.2
-    # # th1 = np.pi - th1
-    if th3 <= (np.pi/2):
-        if th3 > 0:
-            th3 *= -1
-    if backLeg:
-        th3 *= -1
-        th1 -= np.pi
-        # th1 *= 2
-        # th1 -= (th3 - (np.pi/2))
-        print("th3:" + str(th3))
-        print("th1:" + str(th1))
-    else:
-        th1 = np.pi - th1
-    return th1, th3
+        hip = (((np.arccos((-tx)/dT) - np.pi/2) * -1) - kneeHipPaw)
+        knee = np.pi - pawKneeHip
+    
+    phi = np.arccos(ty/dT)
+    print("phi: " + str(phi))
+    return knee, hip, phi
 
 def moveLeg(actuator, position, actType, backLeg):
     global globalHipStatus
     global globalKneeStatus
     xPos = position[0]
     yPos = position[1]
+    zPos = position[2]
 
-    hipRotTarg = calcActRotation(xPos,yPos, backLeg)[1]
-    kneeRotTarg = calcActRotation(xPos,yPos, backLeg)[0]
+    hipRotTarg = calcActRotation(xPos,yPos, zPos, backLeg)[1]
+    kneeRotTarg = calcActRotation(xPos,yPos,zPos, backLeg)[0]
+    rollRotTarg = calcActRotation(xPos,yPos, zPos, backLeg)[2]
     
     if actType == 'hip':
         if hipRotTarg < data.ctrl[actuator]:
@@ -243,6 +240,12 @@ def moveLeg(actuator, position, actType, backLeg):
 
         if data.ctrl[actuator] >= kneeRotTarg - 0.001 and data.ctrl[actuator] <= kneeRotTarg + 0.001:
             globalKneeStatus = 'not moving'
+
+    if actType == 'roll':
+        if rollRotTarg < data.ctrl[actuator]:
+            data.ctrl[actuator]-= motorSpeed
+        else:
+            data.ctrl[actuator] += motorSpeed
     
 
 def layDown():
@@ -274,17 +277,18 @@ def neutralPos():
     if globalRobotState == 'neutral pos':
         positionTargetX = 0.06
         positionTargetY = 0.3
-        moveLeg(FLH, [positionTargetX,positionTargetY],'hip', False)
-        moveLeg(FLK, [positionTargetX,positionTargetY],'knee', False)
+        positionTargetZ = 0.1
+        moveLeg(FLH, [positionTargetX,positionTargetY, positionTargetZ],'hip', False)
+        moveLeg(FLK, [positionTargetX,positionTargetY, positionTargetZ],'knee', False)
 
-        moveLeg(FRH, [positionTargetX,positionTargetY],'hip', False)
-        moveLeg(FRK, [positionTargetX,positionTargetY],'knee', False)
+        moveLeg(FRH, [positionTargetX,positionTargetY, positionTargetZ],'hip', False)
+        moveLeg(FRK, [positionTargetX,positionTargetY,positionTargetZ],'knee', False)
 
-        moveLeg(BLH, [-positionTargetX,positionTargetY],'hip', True)
-        moveLeg(BLK, [-positionTargetX,positionTargetY],'knee', True)
+        moveLeg(BLH, [-positionTargetX,positionTargetY,positionTargetZ],'hip', True)
+        moveLeg(BLK, [-positionTargetX,positionTargetY,positionTargetZ],'knee', True)
 
-        moveLeg(BRH, [-positionTargetX,positionTargetY],'hip', True)
-        moveLeg(BRK, [-positionTargetX,positionTargetY],'knee', True)
+        moveLeg(BRH, [-positionTargetX,positionTargetY,positionTargetZ],'hip', True)
+        moveLeg(BRK, [-positionTargetX,positionTargetY,positionTargetZ],'knee', True)
         if globalHipStatus == 'not moving' and globalKneeStatus =='not moving':
             globalRobotState = 'finished'
     elif globalRobotState == 'finished' or globalRobotState == 'start':
@@ -327,20 +331,27 @@ class RobotStateMachine:
 
     def neutralPos(self):
         positionTargetX = 0.02
-        positionTargetY = 0.34
-        moveLeg(FLH, [positionTargetX,positionTargetY],'hip', False)
-        moveLeg(FLK, [positionTargetX,positionTargetY],'knee', False)
+        positionTargetY = .34
+        positionTargetZ = 0.1
+        moveLeg(FLH, [positionTargetX,positionTargetY,positionTargetZ],'hip', False)
+        moveLeg(FLK, [positionTargetX,positionTargetY,positionTargetZ],'knee', False)
+        moveLeg(FLR, [positionTargetX,positionTargetY,positionTargetZ],'roll', False)
 
-        moveLeg(FRH, [positionTargetX,positionTargetY],'hip', False)
-        moveLeg(FRK, [positionTargetX,positionTargetY],'knee', False)
+        moveLeg(FRH, [positionTargetX,positionTargetY,positionTargetZ],'hip', False)
+        moveLeg(FRK, [positionTargetX,positionTargetY,positionTargetZ],'knee', False)
+        moveLeg(FRR, [positionTargetX,positionTargetY,positionTargetZ],'roll', False)
 
-        moveLeg(BLH, [positionTargetX,positionTargetY],'hip', True)
-        moveLeg(BLK, [positionTargetX,positionTargetY],'knee', True)
+        moveLeg(BLH, [positionTargetX,positionTargetY,positionTargetZ],'hip', True)
+        moveLeg(BLK, [positionTargetX,positionTargetY,positionTargetZ],'knee', True)
+        moveLeg(BLR, [positionTargetX,positionTargetY,positionTargetZ],'roll', True)
 
-        moveLeg(BRH, [positionTargetX,positionTargetY],'hip', True)
-        moveLeg(BRK, [positionTargetX,positionTargetY],'knee', True)
-        if self.check_position(FRK, 'knee', positionTargetX, positionTargetY, False) \
-                and self.check_position(BRK, 'knee', positionTargetX, positionTargetY, True):
+
+        moveLeg(BRH, [positionTargetX,positionTargetY,positionTargetZ],'hip', True)
+        moveLeg(BRK, [positionTargetX,positionTargetY,positionTargetZ],'knee', True)
+        moveLeg(BRR, [positionTargetX,positionTargetY,positionTargetZ],'roll', True)
+
+        if self.check_position(FRK, 'knee', positionTargetX, positionTargetY, positionTargetZ, False) \
+                and self.check_position(BRK, 'knee', positionTargetX, positionTargetY, positionTargetZ, True):
             self.state = 'INIT'
 
 
@@ -394,13 +405,13 @@ class RobotStateMachine:
             self.state = 'FL_BR Dropped'
 
 
-    def check_position(self, actIndex, actType, posX, posY, backLeg):
+    def check_position(self, actIndex, actType, posX, posY, posZ,backLeg):
         global targetPosPub
         global currentPosPub
         resultIndex = 0
         if actType == 'hip':
             resultIndex = 1
-        targetPos = calcActRotation(posX, posY, backLeg)[resultIndex]
+        targetPos = calcActRotation(posX, posY, posZ, backLeg)[resultIndex]
         targetPosPub = targetPos
         currentPos = data.ctrl[actIndex]
         currentPosPub = data.ctrl
@@ -410,6 +421,20 @@ class RobotStateMachine:
 
 robot_fsm = RobotStateMachine()
 
+def getCoM():
+    total_mass = 0
+    com = np.zeros(3)
+    for i in range(model.nbody):
+        mass = model.body_mass[i]
+        pos = data.xipos[i]
+        com += mass * pos
+        total_mass += mass
+    com /= total_mass
+    print("Center of Mass:", com)
+    return com
+
+# Add the CoM sphere
+com_body_id = mj.mj_name2id(model, mj.mjtObj.mjOBJ_GEOM, "com_sphere")
 
 
 lookPosX = 0
@@ -420,10 +445,27 @@ while not glfw.window_should_close(window):
     time_prev = data.time
     direction = 0
     while data.time - time_prev < 1.0/displayRefreshRate:
-
         counter += 1
         # robotFSM.step()
-        robot_fsm.step()
+        # getCoM()
+        # data.geom_xpos[model.ngeom - 1] = getCoM
+        total_mass = 0
+        com = np.zeros(3)
+        for i in range(model.nbody):
+            mass = model.body_mass[i]
+            pos = data.xipos[i]
+            com += mass * pos
+            total_mass += mass
+        com /= total_mass
+        # print("CoM: " + str(com))
+        # print("CoM Sphere ID:", com_geom_id)
+        data.xpos[com_body_id] = com
+        # print(f"Updated CoM Sphere Position: {data.geom_xpos[com_geom_id]}")
+        
+        # robot_fsm.step()
+        robot_fsm.neutralPos()
+        # neutralPos()
+        # print(f"CoM Sphere xpos: {data.xpos[com_body_id]}")
         # robot_fsm.neutralPos()
         
         if counter % 100 == 0:
@@ -455,8 +497,9 @@ while not glfw.window_should_close(window):
     cam.lookat = [robot_x, robot_y, 0.2]
 
     cam.distance = 2  # Adjust this distance as needed
-    cam.azimuth = 45   # Keep or modify this for different angles
-    cam.elevation = -35 # Adjust the elevation if necessary
+    cam.azimuth = 0  # Keep or modify this for different angles
+    cam.elevation = -0 # Adjust the elevation if necessary
+    cam.orthographic = 1
     # Update scene and render
     mj.mjv_updateScene(model, data, opt, None, cam,
                        mj.mjtCatBit.mjCAT_ALL.value, scene)
