@@ -1,23 +1,14 @@
 import mujoco as mj
 from mujoco.glfw import glfw
 import numpy as np
-import os
-import time
+
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
 
-# xml_path = 'hello.xml' #xml file (assumes this is in the same folder as this file)
-simend = 10 #simulation time
+
 print_camera_config = 1 #set to 1 to print camera config
                         #this is useful for initializing view of the model
-
-# For callback functions
-button_left = False
-button_middle = False
-button_right = False
-lastx = 0
-lasty = 0
 
 modelPath = 'ros2_ws/quadruped-new/quadruped.xml'
 displayRefreshRate = 240
@@ -36,89 +27,31 @@ class ActuatorPositionPub(Node):
     print("\033c") # disable if this causes problems, just clears the terminal
     self.get_logger().info('Actuator Positions: "%s"' % msg.data)
 
-
-def init_controller(model,data):
-    #initialize the controller here. This function is called once, in the beginning
-    pass
-
-def controller(model, data):
-    #put the controller here. This function is called inside the simulation.
-    pass
-
-def keyboard(window, key, scancode, act, mods):
-    if act == glfw.PRESS and key == glfw.KEY_BACKSPACE:
-        mj.mj_resetData(model, data)
-        mj.mj_forward(model, data)
-
-def mouse_button(window, button, act, mods):
-    # update button state
-    global button_left
-    global button_middle
-    global button_right
-
-    button_left = (glfw.get_mouse_button(
-        window, glfw.MOUSE_BUTTON_LEFT) == glfw.PRESS)
-    button_middle = (glfw.get_mouse_button(
-        window, glfw.MOUSE_BUTTON_MIDDLE) == glfw.PRESS)
-    button_right = (glfw.get_mouse_button(
-        window, glfw.MOUSE_BUTTON_RIGHT) == glfw.PRESS)
-
-    # update mouse position
-    glfw.get_cursor_pos(window)
-
-def mouse_move(window, xpos, ypos):
-    # compute mouse displacement, save
-    global lastx
-    global lasty
-    global button_left
-    global button_middle
-    global button_right
-
-    dx = xpos - lastx
-    dy = ypos - lasty
-    lastx = xpos
-    lasty = ypos
-
-    # no buttons down: nothing to do
-    if (not button_left) and (not button_middle) and (not button_right):
-        return
-
-    # get current window size
-    width, height = glfw.get_window_size(window)
-
-    # get shift key state
-    PRESS_LEFT_SHIFT = glfw.get_key(
-        window, glfw.KEY_LEFT_SHIFT) == glfw.PRESS
-    PRESS_RIGHT_SHIFT = glfw.get_key(
-        window, glfw.KEY_RIGHT_SHIFT) == glfw.PRESS
-    mod_shift = (PRESS_LEFT_SHIFT or PRESS_RIGHT_SHIFT)
-
-    # determine action based on mouse button
-    if button_right:
-        if mod_shift:
-            action = mj.mjtMouse.mjMOUSE_MOVE_H
-        else:
-            action = mj.mjtMouse.mjMOUSE_MOVE_V
-    elif button_left:
-        if mod_shift:
-            action = mj.mjtMouse.mjMOUSE_ROTATE_H
-        else:
-            action = mj.mjtMouse.mjMOUSE_ROTATE_V
-    else:
-        action = mj.mjtMouse.mjMOUSE_ZOOM
-
-    mj.mjv_moveCamera(model, action, dx/height,
-                      dy/height, scene, cam)
-
-def scroll(window, xoffset, yoffset):
-    action = mj.mjtMouse.mjMOUSE_ZOOM
-    mj.mjv_moveCamera(model, action, 0.0, -0.05 *
-                      yoffset, scene, cam)
-
-#get the full path
-# dirname = os.path.dirname(__file__)
-# abspath = os.path.join(dirname + "/" + xml_path)
-# xml_path = abspath
+keyBoardControl = 'none'
+def keyboard_callback(window, key, scancode, action, mods):
+    global keyBoardControl
+    if action == glfw.PRESS or action == glfw.REPEAT:  # Handle key press or hold
+        if key == glfw.KEY_W:  # Move forward)
+            keyBoardControl = 'fwd'
+        elif key == glfw.KEY_A:  # Turn left
+            keyBoardControl = 'lft'
+        elif key == glfw.KEY_D:  # Turn right
+            keyBoardControl = 'rgt'
+        elif key == glfw.KEY_S:
+            keyBoardControl = 'bck'
+        elif key == glfw.KEY_X:  # Neutral position or stop
+            keyBoardControl = 'nut'
+    elif action == glfw.RELEASE:
+        if key == glfw.KEY_W:  # Move forward
+            keyBoardControl = 'nut'
+        elif key == glfw.KEY_A:  # Turn left
+            keyBoardControl = 'nut'
+        elif key == glfw.KEY_D:  # Turn right
+            keyBoardControl = 'nut'
+        elif key == glfw.KEY_S:
+            keyBoardControl = 'nut'
+        elif key == glfw.KEY_X:  # Neutral position or stop
+            keyBoardControl = 'nut'
 
 # MuJoCo data structures
 model = mj.MjModel.from_xml_path(modelPath)  # MuJoCo model
@@ -126,35 +59,8 @@ data = mj.MjData(model)                     # MuJoCo data
 cam = mj.MjvCamera()                        # Abstract camera
 opt = mj.MjvOption()                        # visualization options
 
-# Init GLFW, create window, make OpenGL context current, request v-sync
-glfw.init()
-window = glfw.create_window(1200, 900, "Quadraped", None, None)
-glfw.make_context_current(window)
-glfw.swap_interval(1)
-
-# initialize visualization data structures
-mj.mjv_defaultCamera(cam)
-mj.mjv_defaultOption(opt)
-scene = mj.MjvScene(model, maxgeom=10000)
-context = mj.MjrContext(model, mj.mjtFontScale.mjFONTSCALE_150.value)
-
-# install GLFW mouse and keyboard callbacks
-glfw.set_key_callback(window, keyboard)
-glfw.set_cursor_pos_callback(window, mouse_move)
-glfw.set_mouse_button_callback(window, mouse_button)
-glfw.set_scroll_callback(window, scroll)
-
-# Example on how to set camera configuration
-cam.azimuth = 45
-cam.elevation = -35
-cam.distance = 2
-cam.lookat = np.array([0.0, 0.0, 0])
-
-#initialize the controller
-init_controller(model,data)
 
 #set the controller
-mj.set_mjcb_control(controller)
 FRH = mj.mj_name2id(model, mj.mjtObj.mjOBJ_ACTUATOR, 'FR-H-servo')
 FLH = mj.mj_name2id(model, mj.mjtObj.mjOBJ_ACTUATOR, 'FL-H-servo')
 BRH = mj.mj_name2id(model, mj.mjtObj.mjOBJ_ACTUATOR, 'BR-H-servo')
@@ -187,14 +93,8 @@ def calcActRotation(tx, ty, tz, backleg):
     dT = np.sqrt(tx**2 + ty**2 + tz**2)
     kneeHipPaw = np.arccos((r1**2 + dT**2 - r2**2)/(2 * r1 * dT))
     pawKneeHip = np.arccos((r1**2 + r2**2 - dT**2)/(2 * r1 * r2))
-    # print('pawKneeHip', np.rad2deg(pawKneeHip))
-    # print('kneeHipPaw', np.rad2deg(kneeHipPaw))
-
 
     hip = np.arccos(-tx/dT) - kneeHipPaw
-    # print(np.arctan(-tx/(ty)))
-    # print((np.arccos((-tx)/dT) - np.pi/2) * -1)
-
     knee = np.pi - pawKneeHip
 
     if backleg:
@@ -208,11 +108,8 @@ def calcActRotation(tx, ty, tz, backleg):
     if(tz < 0):
         phi *= -1
 
-
-    # print(np.rad2deg(knee))
     if knee > np.deg2rad(60):
         print('out of range')
-    # print("phi: " + str(phi))
     return knee, hip, phi
 
 def moveLeg(actuator, position, actType, backLeg):
@@ -255,29 +152,27 @@ class RobotStateMachine:
     walkCounter = 0
     def __init__(self):
         self.state = 'get neutral'
-        self.direction = 1  # Set to 1 for forward, -1 for backward
 
-    def step(self):
+    def step(self, direction):
         # print(self.state)
         if (self.state == 'get neutral'):
             self.neutralPos()
         elif self.state == 'INIT':
-            self.FL_BR_Drop(-self.direction)
-            self.FR_BL_Lift(self.direction)
+            self.FL_BR_Drop(-direction)
+            self.FR_BL_Lift(direction)
         elif self.state == 'FR_BL Lifted':
-            self.FR_BL_Drop(self.direction)
+            self.FR_BL_Drop(direction)
         elif self.state == 'FR_BL Dropped':
-            self.FR_BL_Drop(-self.direction)
-            self.FL_BR_Lift(self.direction)
+            self.FR_BL_Drop(-direction)
+            self.FL_BR_Lift(direction)
         elif self.state == 'FL_BR Lifted':
-            self.FL_BR_Drop(self.direction)
+            self.FL_BR_Drop(direction)
         elif self.state == 'FL_BR Dropped':
             # print("Sequence complete: Resetting to INIT")
             self.walkCounter += 1
             self.state = 'INIT'  # Reset or set up for next step
 
     def turn(self, direction):
-        print(self.state)
         if direction == "right":
             if(self.state == 'get neutral'):
                 self.neutralPos()
@@ -308,35 +203,6 @@ class RobotStateMachine:
                 self.retractDiag('right',2)
             elif self.state == 'right_retracted2':
                 self.state = "INIT"
-            # lift left  
-            # extend left
-            # drop left
-            # retract left
-            # elif self.state == 'right_extended1':
-            #     self.extendDiagonal('left',1)
-            # elif self.state == 'left_extended1':
-            #     self.retractDiag('right',1)
-
-            
-            
-        # elif direction == 'left':
-        #     if(self.state == 'get neutral'):
-        #         self.neutralPos()
-        #     if self.state == "INIT":
-        #         self.liftDiagonals('left')
-        #     if self.state == 'left_diagonals_lifted':
-        #         self.extendDiagonal('right', 1)
-        #     if self.state == 'right_extended1':
-        #         self.dropDiagonals('right')
-        #     if self.state == 'right_dropped':
-        #         self.extendDiagonal('left', 1)
-            
-                # self.extendDiagonal('right', 1)
-
-
-
-            
-
 
     def neutralPos(self):
         positionTargetX = 0.02
@@ -424,7 +290,6 @@ class RobotStateMachine:
             self.state = 'FL_BR Dropped'
 
     def liftDiagonals(self, side, previousZ):
-        # print('lifting diagonals')
         global walkingLiftPosY, walkingPosY, turnOffset
         if previousZ == 'extended':
             zVal = turnOffset
@@ -566,7 +431,7 @@ class RobotStateMachine:
         return False
 
 robot_fsm = RobotStateMachine()
-
+        
 def getCoM():
     total_mass = 0
     com = np.zeros(3)
@@ -583,73 +448,67 @@ def getCoM():
 com_body_id = mj.mj_name2id(model, mj.mjtObj.mjOBJ_GEOM, "com_sphere")
 
 
+# Init GLFW, create window, make OpenGL context current, request v-sync
+glfw.init()
+window = glfw.create_window(int(1200), int(900), "Quadruped", None, None)
+glfw.make_context_current(window)
+glfw.swap_interval(1)
+
+# initialize visualization data structures
+mj.mjv_defaultCamera(cam)
+mj.mjv_defaultOption(opt)
+scene = mj.MjvScene(model, maxgeom=10000)
+context = mj.MjrContext(model, mj.mjtFontScale.mjFONTSCALE_150.value)
+
+# install GLFW mouse and keyboard callbacks
+glfw.set_key_callback(window, keyboard_callback)
+
+robot_fsm.__init__
 while not glfw.window_should_close(window):
     time_prev = data.time
     direction = 0
-    while data.time - time_prev < 1.0/displayRefreshRate:
-        counter += 1
+    # print (keyBoardControl)
+    while data.time - time_prev < 1.0 / displayRefreshRate:
+        # Keyboard Control
+        if keyBoardControl == 'fwd':
+            robot_fsm.step(1)
+        elif keyBoardControl == 'lft':
+            robot_fsm.turn("left")
+        elif keyBoardControl == 'rgt':
+            robot_fsm.turn('right')
+        elif keyBoardControl == 'bck':
+            robot_fsm.step(-1)
+        elif keyBoardControl == 'nut':
+            robot_fsm.neutralPos()
 
-        total_mass = 0
-        com = np.zeros(3)
-        for i in range(model.nbody):
-            mass = model.body_mass[i]
-            pos = data.xipos[i]
-            com += mass * pos
-            total_mass += mass
-        com /= total_mass
-        # print("CoM: " + str(com))
-        # print("CoM Sphere ID:", com_geom_id)
-        data.xpos[com_body_id] = com
-        # print(f"Updated CoM Sphere Position: {data.geom_xpos[com_geom_id]}")
-        
-        # robot_fsm.step()
-        robot_fsm.turn('right')
-        # robot_fsm.neutralPos()
-        # neutralPos()
-        # print(f"CoM Sphere xpos: {data.xpos[com_body_id]}")
-        # robot_fsm.neutralPos()
-        
+        # Step the MuJoCo simulation
+        mj.mj_step(model, data)
+        glfw.poll_events()
+
+        # Add rendering or debugging code here if needed
         if counter % 100 == 0:
             pass
-            # temp = ''
-            # hipTarget = str(calcActRotation(positionTargetX,positionTargetY)[1])
-            # kneeTarget = str(calcActRotation(positionTargetX,positionTargetY)[0])
-            # actuatorPositionNode.pub_actuator_pos()
-            # actuatorPositionNode.pub_actuator_pos(str(data.ctrl[FRH]) + ' ' + globalHipStatus + ' ' + globalRobotState + ' ' + str(walkingPosXFwd) + ' ' + str(walkCounter))
-       
-        mj.mj_step(model, data)
+            # Add any periodic debugging or state updates here
 
-
-    # if (data.time>=simend):
-    #     break
-
-    # get framebuffer viewport
-    viewport_width, viewport_height = glfw.get_framebuffer_size(
-        window)
+    # Handle rendering
+    viewport_width, viewport_height = glfw.get_framebuffer_size(window)
     viewport = mj.MjrRect(0, 0, viewport_width, viewport_height)
 
-    #print camera configuration (help to initialize the view)
-    # if (print_camera_config==1):
-    #     print('cam.azimuth =',cam.azimuth,';','cam.elevation =',cam.elevation,';','cam.distance = ',cam.distance)
-    #     print('cam.lookat =np.array([',cam.lookat[0],',',cam.lookat[1],',',cam.lookat[2],'])')
-    smoothing_factor = 0.1
+    # Camera updates (tracking robot position)
     robot_x = data.xpos[1][0]  # X-coordinate of the robot
-    robot_y = data.xpos[1][1]  # Y-coordinate of the robot 
+    robot_y = data.xpos[1][1]  # Y-coordinate of the robot
     cam.lookat = [robot_x, robot_y, 0.2]
 
-    cam.distance = 2  # Adjust this distance as needed
-    cam.azimuth = 45  # Keep or modify this for different angles
-    cam.elevation = -35 # Adjust the elevation if necessary
+    cam.distance = 2
+    cam.azimuth = 45
+    cam.elevation = -35
     cam.orthographic = 1
+
     # Update scene and render
-    mj.mjv_updateScene(model, data, opt, None, cam,
-                       mj.mjtCatBit.mjCAT_ALL.value, scene)
+    mj.mjv_updateScene(model, data, opt, None, cam, mj.mjtCatBit.mjCAT_ALL.value, scene)
     mj.mjr_render(viewport, scene, context)
 
-    # swap OpenGL buffers (blocking call due to v-sync)
+    # Swap buffers
     glfw.swap_buffers(window)
-
-    # process pending GUI events, call GLFW callbacks
-    glfw.poll_events()
 
 glfw.terminate()
