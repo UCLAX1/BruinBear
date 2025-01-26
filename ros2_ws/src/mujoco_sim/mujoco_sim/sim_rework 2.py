@@ -28,8 +28,9 @@ class ActuatorPositionPub(Node):
     self.get_logger().info('Actuator Positions: "%s"' % msg.data)
 
 keyBoardControl = 'none'
+cameraControl = 'none'
 def keyboard_callback(window, key, scancode, action, mods):
-    global keyBoardControl
+    global keyBoardControl, cameraControl
     if action == glfw.PRESS or action == glfw.REPEAT:  # Handle key press or hold
         if key == glfw.KEY_W:  # Move forward)
             keyBoardControl = 'fwd'
@@ -41,6 +42,17 @@ def keyboard_callback(window, key, scancode, action, mods):
             keyBoardControl = 'bck'
         elif key == glfw.KEY_X:  # Neutral position or stop
             keyBoardControl = 'nut'
+        elif key == glfw.KEY_UP:
+            cameraControl = 'up'
+        elif key == glfw.KEY_DOWN:
+            cameraControl = 'down'
+        elif key == glfw.KEY_RIGHT:
+            cameraControl = 'right'
+        elif key == glfw.KEY_LEFT:
+            cameraControl = 'left'
+        elif key == glfw.KEY_DELETE:
+            cameraControl = 'home'
+        
     elif action == glfw.RELEASE:
         if key == glfw.KEY_W:  # Move forward
             keyBoardControl = 'nut'
@@ -52,6 +64,16 @@ def keyboard_callback(window, key, scancode, action, mods):
             keyBoardControl = 'nut'
         elif key == glfw.KEY_X:  # Neutral position or stop
             keyBoardControl = 'nut'
+        elif key == glfw.KEY_UP:
+            cameraControl = 'none'
+        elif key == glfw.KEY_DOWN:
+            cameraControl = 'none'
+        elif key == glfw.KEY_RIGHT:
+            cameraControl = 'none'
+        elif key == glfw.KEY_LEFT:
+            cameraControl = 'none'
+        elif key == glfw.KEY_DELETE:
+            cameraControl = 'none'
 
 # MuJoCo data structures
 model = mj.MjModel.from_xml_path(modelPath)  # MuJoCo model
@@ -142,11 +164,11 @@ def moveLeg(actuator, position, actType, backLeg):
 
 
 walkCounter = 0
-walkingPosX = 0.02
+walkingPosX = 0.03
 walkingLiftPosX = walkingPosX/2
-walkingPosY = 0.34
-walkingLiftPosY = 0.325
-walkingPosZ = 0.05
+walkingPosY = 0.35
+walkingLiftPosY = 0.335
+walkingPosZ = 0.0
 turnOffset = 0.1
 class RobotStateMachine:
     walkCounter = 0
@@ -463,6 +485,10 @@ context = mj.MjrContext(model, mj.mjtFontScale.mjFONTSCALE_150.value)
 # install GLFW mouse and keyboard callbacks
 glfw.set_key_callback(window, keyboard_callback)
 
+cam.distance = 2
+cam.azimuth = 45
+cam.elevation = -35
+cam.orthographic = 1
 robot_fsm.__init__
 while not glfw.window_should_close(window):
     time_prev = data.time
@@ -480,7 +506,28 @@ while not glfw.window_should_close(window):
             robot_fsm.step(-1)
         elif keyBoardControl == 'nut':
             robot_fsm.neutralPos()
-
+        
+        if cameraControl == 'down':
+            cam.elevation -= 0.1
+        elif cameraControl == 'up':
+            cam.elevation += 0.1
+        elif cameraControl == 'right':
+            cam.azimuth -= 0.1
+        elif cameraControl == 'left':
+            cam.azimuth += 0.1
+        elif cameraControl == 'home':
+            if cam.azimuth > 45:
+                while cam.azimuth > 45:
+                    cam.azimuth -= 0.1
+            if cam.azimuth < 45:
+                while cam.azimuth < 45:
+                    cam.azimuth += 0.1
+            if cam.elevation > -35:
+                while cam.elevation > -35:
+                    cam.elevation -= 0.1
+            if cam.elevation < -35:
+                while cam.elevation < -35:
+                    cam.elevation += 0.1
         # Step the MuJoCo simulation
         mj.mj_step(model, data)
         glfw.poll_events()
@@ -499,10 +546,7 @@ while not glfw.window_should_close(window):
     robot_y = data.xpos[1][1]  # Y-coordinate of the robot
     cam.lookat = [robot_x, robot_y, 0.2]
 
-    cam.distance = 2
-    cam.azimuth = 45
-    cam.elevation = -35
-    cam.orthographic = 1
+
 
     # Update scene and render
     mj.mjv_updateScene(model, data, opt, None, cam, mj.mjtCatBit.mjCAT_ALL.value, scene)
