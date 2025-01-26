@@ -19,17 +19,17 @@ r2 = 0.177
 width = 0.15
 height = 0.03
 dt = 0.01
-totalTrajTime = 1
+totalTrajTime = 3
 trotting = True
 forwardStrokeTime = totalTrajTime/2 if trotting else totalTrajTime/4
 backStrokeTime = totalTrajTime/2 if trotting else (3*totalTrajTime)/4
 homeY = -0.3
 
-viapoints = np.array([[0, homeY],
-                    [-width/2, homeY],
-                    [0, height+homeY],
-                    [width/2, homeY],
-                    [0, homeY]])
+viapoints = np.array([[0, homeY, 0.02],
+                    [-width/2, homeY, 0.02],
+                    [0, height+homeY, 0.02],
+                    [width/2, homeY, 0.02],
+                    [0, homeY, 0.02]])
 
 time_segments = [backStrokeTime/2, forwardStrokeTime/2, forwardStrokeTime/2, backStrokeTime/2]
 traj = mstraj(viapoints, dt, tacc = dt/4, tsegment = time_segments)
@@ -69,6 +69,7 @@ def main(args=None):
     startTime = time.time()
     while walking:
         curTime = time.time() - startTime
+        
         tTraj = curTime % totalTrajTime
 
         #calculate the leg offsets for the gait
@@ -80,18 +81,16 @@ def main(args=None):
         print('findTimeStep', findTimeStep(tBL))
         print('total time steps', timeSteps)
 
-        # trajNode.get_logger().info("time step " + str(timeSteps))
-        # trajNode.get_logger().info("pos at FL timestep " + str(positions[findTimeStep(tFL)]))
-
-
         posFL = solveIK(positions[findTimeStep(tFL)])
         posFR = solveIK(positions[findTimeStep(tFR)])
         posBR = solveIK(positions[findTimeStep(tBR)], True)
         posBL = solveIK(positions[findTimeStep(tBL)], True)
 
+        trajNode.get_logger().info(str(posFL))
+
         joint_positions = [posFL[0], posFR[0], posBR[0], posBL[0], 
                            posFL[1], posFR[1], posBR[1], posBL[1], 
-                           0.0, 0.0, 0.0, 0.0]
+                           posFL[0], posFR[0], posBR[0], posBL[0]]
         trajNode.pub_actuator_pos(joint_positions)
 
 if __name__ == '__main__':
