@@ -20,7 +20,7 @@ lastx = 0
 lasty = 0
 
 modelPath = 'ros2_ws/quadruped-new/quadruped.xml'
-displayRefreshRate = 120
+displayRefreshRate = 240
 
 class ActuatorPositionPub(Node):
   def __init__(self):
@@ -248,9 +248,9 @@ walkCounter = 0
 walkingPosX = 0.02
 walkingLiftPosX = walkingPosX/2
 walkingPosY = 0.34
-walkingLiftPosY = 0.33
+walkingLiftPosY = 0.325
 walkingPosZ = 0.05
-turnOffset = 0.05
+turnOffset = 0.1
 class RobotStateMachine:
     walkCounter = 0
     def __init__(self):
@@ -282,23 +282,43 @@ class RobotStateMachine:
             if(self.state == 'get neutral'):
                 self.neutralPos()
             elif self.state == 'INIT':
-                self.liftDiagonals('right')
+                self.liftDiagonals('right', 'extended')
             elif self.state == 'right_diagonals_lifted':
                 self.extendDiagonal('right',1)
             elif self.state == 'right_extended1':
                 self.extendDiagonal('left',1)
             elif self.state == 'left_extended1':
-                self.dropDiagonals("right")
-            elif self.state == 'right_dropped':
-                self.liftDiagonals('left')
+                self.retractDiag('right',1)
+            elif self.state == 'right_retracted1':
+                self.retractDiag('left',2)
+            elif self.state == 'left_retracted2':
+                self.state = "INIT"
+        elif direction == 'left':
+            if(self.state == 'get neutral'):
+                self.neutralPos()
+            elif self.state == 'INIT':
+                self.liftDiagonals('left', 'extended')
             elif self.state == 'left_diagonals_lifted':
-                self.extendDiagonal('right', 2)
-            elif self.state == 'right_extended2':
-                self.extendDiagonal('left', 2)
-            elif self.state == 'left_extended2':
-                self.dropDiagonals('left')
-            elif self.state == 'left_dropped':
-                self.state = 'INIT'
+                self.extendDiagonal('left',1)
+            elif self.state == 'left_extended1':
+                self.extendDiagonal('right',1)
+            elif self.state == 'right_extended1':
+                self.retractDiag('left',1)
+            elif self.state == 'left_retracted1':
+                self.retractDiag('right',2)
+            elif self.state == 'right_retracted2':
+                self.state = "INIT"
+            # lift left  
+            # extend left
+            # drop left
+            # retract left
+            # elif self.state == 'right_extended1':
+            #     self.extendDiagonal('left',1)
+            # elif self.state == 'left_extended1':
+            #     self.retractDiag('right',1)
+
+            
+            
         # elif direction == 'left':
         #     if(self.state == 'get neutral'):
         #         self.neutralPos()
@@ -403,124 +423,133 @@ class RobotStateMachine:
                 and self.check_position(BRK, 'knee', walkingPosX * d, walkingPosY, walkingPosZ, True):
             self.state = 'FL_BR Dropped'
 
-    def liftDiagonals(self, side):
-        global walkingLiftPosY, walkingPosY
-        if side =='right':
-            frPos = walkingLiftPosY
-            brPos = walkingPosY
-            flPos = walkingPosY
-            blPos = walkingLiftPosY
+    def liftDiagonals(self, side, previousZ):
+        # print('lifting diagonals')
+        global walkingLiftPosY, walkingPosY, turnOffset
+        if previousZ == 'extended':
+            zVal = turnOffset
         else:
-            frPos = walkingPosY
-            brPos = walkingLiftPosY
-            flPos = walkingLiftPosY
-            blPos = walkingPosY
+            zVal = 0
 
-        moveLeg(FRK, [0, frPos, 0], 'knee', False)
-        moveLeg(FRH, [0, frPos, 0], 'hip', False)
-        moveLeg(FRR, [0, frPos, 0], 'roll', False)
+        if side =='right':
+            moveLeg(FRK, [0, walkingLiftPosY, zVal], 'knee', False)
+            moveLeg(FRH, [0, walkingLiftPosY, zVal], 'hip', False)
+            moveLeg(FRR, [0, walkingLiftPosY, zVal], 'roll', False)
 
-        moveLeg(FLK, [0, flPos, 0], 'knee', False)
-        moveLeg(FLH, [0, flPos, 0], 'hip', False)
-        moveLeg(FLR, [0, flPos, 0], 'roll', False)
+            moveLeg(BLK, [0, walkingLiftPosY, zVal], 'knee', True)
+            moveLeg(BLH, [0, walkingLiftPosY, zVal], 'hip', True)
+            moveLeg(BLR, [0, walkingLiftPosY, zVal], 'roll', True)
+        else:
+            moveLeg(FLK, [0, walkingLiftPosY, zVal], 'knee', False)
+            moveLeg(FLH, [0, walkingLiftPosY, zVal], 'hip', False)
+            moveLeg(FLR, [0, walkingLiftPosY, zVal], 'roll', False)
 
-        moveLeg(BRK, [0, brPos, 0], 'knee', True)
-        moveLeg(BRH, [0, brPos, 0], 'hip', True)
-        moveLeg(BRR, [0, brPos, 0], 'roll', True)
-
-        moveLeg(BLK, [0, blPos, 0], 'knee', True)
-        moveLeg(BLH, [0, blPos, 0], 'hip', True)
-        moveLeg(BLR, [0, blPos, 0], 'roll', True)
-
+            moveLeg(BRK, [0, walkingLiftPosY, zVal], 'knee', True)
+            moveLeg(BRH, [0, walkingLiftPosY, zVal], 'hip', True)
+            moveLeg(BRR, [0, walkingLiftPosY, zVal], 'roll', True)
+       
         if side == 'right':
-            if self.check_position(FRK, 'knee', 0, frPos, 0, False) \
-                    and self.check_position(BLK, 'knee', 0, frPos, 0, True):
+            if self.check_position(FRK, 'knee', 0, walkingLiftPosY, zVal, False) \
+                    and self.check_position(BLK, 'knee', 0, walkingLiftPosY, zVal, True):
                 self.state = 'right_diagonals_lifted'
         else:
-            if self.check_position(FLK, 'knee', 0, flPos, 0, False) \
-                    and self.check_position(BRK, 'knee', 0, brPos, 0, True):
+            if self.check_position(FLK, 'knee', 0, walkingLiftPosY, zVal, False) \
+                    and self.check_position(BRK, 'knee', 0, walkingLiftPosY, zVal, True):
                 self.state = 'left_diagonals_lifted'
 
 
-    def dropDiagonals(self, side):
+    def dropDiagonals(self, side, previousZ):
         global walkingLiftPosY, walkingPosY, turnOffset
-        if side =='left':
-            frOffset = -turnOffset
-            brOffset = -turnOffset
-            flOffset = turnOffset
-            blOffset = -turnOffset
+        if previousZ == 'extended':
+            zVal = turnOffset
         else:
-            frOffset = turnOffset
-            brOffset = turnOffset
-            flOffset = -turnOffset
-            blOffset = turnOffset
-        moveLeg(FRK, [0, walkingPosY, frOffset], 'knee', False)
-        moveLeg(FRH, [0, walkingPosY, frOffset], 'hip', False)
-        moveLeg(FRR, [0, walkingPosY, frOffset], 'roll', False)
+            zVal = 0
 
-        moveLeg(FLK, [0, walkingPosY, flOffset], 'knee', False)
-        moveLeg(FLH, [0, walkingPosY, flOffset], 'hip', False)
-        moveLeg(FLR, [0, walkingPosY, flOffset], 'roll', False)
+        if side =='left':
+            moveLeg(FLK, [0, walkingPosY, zVal], 'knee', False)
+            moveLeg(FLH, [0, walkingPosY, zVal], 'hip', False)
+            moveLeg(FLR, [0, walkingPosY, zVal], 'roll', False)
 
-        moveLeg(BRK, [0, walkingPosY, brOffset], 'knee', True)
-        moveLeg(BRH, [0, walkingPosY, brOffset], 'hip', True)
-        moveLeg(BRR, [0, walkingPosY, brOffset], 'roll', True)
+            moveLeg(BRK, [0, walkingPosY, zVal], 'knee', True)
+            moveLeg(BRH, [0, walkingPosY, zVal], 'hip', True)
+            moveLeg(BRR, [0, walkingPosY, zVal], 'roll', True)
+        else:
+            moveLeg(FRK, [0, walkingPosY, zVal], 'knee', False)
+            moveLeg(FRH, [0, walkingPosY, zVal], 'hip', False)
+            moveLeg(FRR, [0, walkingPosY, zVal], 'roll', False)
 
-        moveLeg(BLK, [0, walkingPosY, blOffset], 'knee', True)
-        moveLeg(BLH, [0, walkingPosY, blOffset], 'hip', True)
-        moveLeg(BLR, [0, walkingPosY, blOffset], 'roll', True)
+            moveLeg(BLK, [0, walkingPosY, zVal], 'knee', True)
+            moveLeg(BLH, [0, walkingPosY, zVal], 'hip', True)
+            moveLeg(BLR, [0, walkingPosY, zVal], 'roll', True)
     
         if side == 'right':
-            if self.check_position(FRK, 'knee', 0, walkingPosY, frOffset, False) \
-                    and self.check_position(BLK, 'knee', 0, walkingPosY, blOffset, True):
+            if self.check_position(FRK, 'knee', 0, walkingPosY, zVal, False) \
+                    and self.check_position(BLK, 'knee', 0, walkingPosY, zVal, True):
                 self.state = 'right_dropped'
         else:
-            if self.check_position(FLK, 'knee', 0, walkingPosY, flOffset, False) \
-                    and self.check_position(BRK, 'knee', 0, walkingPosY, brOffset, True):
+            if self.check_position(FLK, 'knee', 0, walkingPosY, zVal, False) \
+                    and self.check_position(BRK, 'knee', 0, walkingPosY, zVal, True):
                 self.state = 'left_dropped'
 
 
         
-    def extendDiagonal(self, turnDirection, mode):
+    def extendDiagonal(self, side, mode):
         global turnOffset
-        if turnDirection =='left':
-            frOffset = -turnOffset
-            brOffset = -turnOffset
-            flOffset = turnOffset
-            blOffset = -turnOffset
+        if side =='left':
+            moveLeg(FLK, [0, walkingPosY, turnOffset], 'knee', False)
+            moveLeg(FLH, [0, walkingPosY, turnOffset], 'hip', False)
+            moveLeg(FLR, [0, walkingPosY, turnOffset], 'roll', False)
+
+            moveLeg(BRK, [0, walkingPosY, turnOffset], 'knee', True)
+            moveLeg(BRH, [0, walkingPosY, turnOffset], 'hip', True)
+            moveLeg(BRR, [0, walkingPosY, turnOffset], 'roll', True)
            
         else:
-            frOffset = turnOffset
-            brOffset = turnOffset
-            flOffset = -turnOffset
-            blOffset = turnOffset
-            # leftOffsetValue = 0
-        # turnOffset *= turnDirection
-        moveLeg(FRK, [0, walkingPosY, frOffset], 'knee', False)
-        moveLeg(FRH, [0, walkingPosY, frOffset], 'hip', False)
-        moveLeg(FRR, [0, walkingPosY, frOffset], 'roll', False)
+            moveLeg(FRK, [0, walkingPosY, turnOffset], 'knee', False)
+            moveLeg(FRH, [0, walkingPosY, turnOffset], 'hip', False)
+            moveLeg(FRR, [0, walkingPosY, turnOffset], 'roll', False)
 
-        moveLeg(FLK, [0, walkingPosY, flOffset], 'knee', False)
-        moveLeg(FLH, [0, walkingPosY, flOffset], 'hip', False)
-        moveLeg(FLR, [0, walkingPosY, flOffset], 'roll', False)
+            moveLeg(BLK, [0, walkingPosY, turnOffset], 'knee', True)
+            moveLeg(BLH, [0, walkingPosY, turnOffset], 'hip', True)
+            moveLeg(BLR, [0, walkingPosY, turnOffset], 'roll', True)
 
-        moveLeg(BRK, [0, walkingPosY, brOffset], 'knee', True)
-        moveLeg(BRH, [0, walkingPosY, brOffset], 'hip', True)
-        moveLeg(BRR, [0, walkingPosY, brOffset], 'roll', True)
-
-        moveLeg(BLK, [0, walkingPosY, blOffset], 'knee', True)
-        moveLeg(BLH, [0, walkingPosY, blOffset], 'hip', True)
-        moveLeg(BLR, [0, walkingPosY, blOffset], 'roll', True)
-        if turnDirection == 'right':
-            if self.check_position(FRK, 'knee', 0, walkingPosY, frOffset, False) \
-                    and self.check_position(BLK, 'knee', 0, walkingPosY, blOffset, True):
+       
+        if side == 'right':
+            if self.check_position(FRK, 'knee', 0, walkingPosY, turnOffset, False) \
+                    and self.check_position(BLK, 'knee', 0, walkingPosY, turnOffset, True):
                 self.state = 'right_extended' + str(mode)
         else:
-            if self.check_position(FLK, 'knee', 0, walkingPosY, flOffset, False) \
-                    and self.check_position(BRK, 'knee', 0, walkingPosY, brOffset, True):
+            if self.check_position(FLK, 'knee', 0, walkingPosY, turnOffset, False) \
+                    and self.check_position(BRK, 'knee', 0, walkingPosY, turnOffset, True):
                 self.state = 'left_extended' + str(mode)
 
+    def retractDiag(self,side, mode):
+        if side =='left':
+            moveLeg(FLK, [0, walkingPosY, 0], 'knee', False)
+            moveLeg(FLH, [0, walkingPosY, 0], 'hip', False)
+            moveLeg(FLR, [0, walkingPosY, 0], 'roll', False)
 
+            moveLeg(BRK, [0, walkingPosY, 0], 'knee', True)
+            moveLeg(BRH, [0, walkingPosY, 0], 'hip', True)
+            moveLeg(BRR, [0, walkingPosY, 0], 'roll', True)
+           
+        else:
+            moveLeg(FRK, [0, walkingPosY, 0], 'knee', False)
+            moveLeg(FRH, [0, walkingPosY, 0], 'hip', False)
+            moveLeg(FRR, [0, walkingPosY, 0], 'roll', False)
+
+            moveLeg(BLK, [0, walkingPosY, 0], 'knee', True)
+            moveLeg(BLH, [0, walkingPosY, 0], 'hip', True)
+            moveLeg(BLR, [0, walkingPosY, 0], 'roll', True)
+
+        if side == 'right':
+            if self.check_position(FRK, 'knee', 0, walkingPosY, 0, False) \
+                    and self.check_position(BLK, 'knee', 0, walkingPosY, 0, True):
+                self.state = 'right_retracted' + str(mode)
+        else:
+            if self.check_position(FLK, 'knee', 0, walkingPosY, 0, False) \
+                    and self.check_position(BRK, 'knee', 0, walkingPosY, 0, True):
+                self.state = 'left_retracted' + str(mode)
 
     def check_position(self, actIndex, actType, posX, posY, posZ,backLeg):
         global targetPosPub
