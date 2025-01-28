@@ -190,7 +190,6 @@ def main(args=None):
             data.ctrl[FRR] = joints[9]
             data.ctrl[BRR] = joints[10]
             data.ctrl[BLR] = joints[11]
-            # simNode.get_logger().info("joint pos" + str(joints))
             
 
             mj.mj_step(model, data)

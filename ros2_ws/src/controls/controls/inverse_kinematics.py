@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import robot_constants as constants
+import controls.robot_constants as constants
 
 r1 = constants.FEMUR
 r2 = constants.TIBULA
@@ -8,7 +8,7 @@ r2 = constants.TIBULA
 def solveIK(t, backLeg=False):
     # # The shoulder is at the origin and the target position is defined as being in the 3rd or 4th quadrants
     tx = t[0] * -1
-    ty = t[1]
+    ty = t[1] * -1
     tz = t[2]
 
     dT = np.sqrt(tx**2 + ty**2 + tz**2)
@@ -18,7 +18,7 @@ def solveIK(t, backLeg=False):
     # print('kneeHipPaw', np.rad2deg(kneeHipPaw))
 
 
-    hip = np.arccos(-tx/dT) - kneeHipPaw
+    hip = np.arccos(np.sqrt(ty**2+tz**2)/dT) - kneeHipPaw
     # print(np.arctan(-tx/(ty)))
     # print((np.arccos((-tx)/dT) - np.pi/2) * -1)
 
@@ -31,14 +31,20 @@ def solveIK(t, backLeg=False):
         hip = (((np.arccos((-tx)/dT) - np.pi/2) * -1) - kneeHipPaw)
         knee = np.pi - pawKneeHip
     
-    phi = np.arccos(ty/dT)
+    phi = np.arccos(np.sqrt(ty**2+tx**2)/dT)
     if(tz < 0):
         phi *= -1
+    print ("phi", phi)
+    print ("ty", ty)
+    print ("dT", dT)
+
 
 
     # print(np.rad2deg(knee))
-    if knee > np.deg2rad(60):
-        print('out of range')
+    if (dT > r1+r1):
+        print ("target too far")
+    elif knee > np.deg2rad(60):
+        print('knee out of range')
     # print("phi: " + str(phi))
     return hip, knee, phi
 
@@ -59,13 +65,17 @@ def plotLeg(theta1, theta2, phi, target):
     foot = knee + np.array([r2 * np.sin(theta1 + theta2), -r2 * np.cos(theta1 + theta2), 0])
     
     # Apply the roll motor rotation (phi)
+    phi *= -1
     roll_matrix = np.array([
         [1, 0, 0],
         [0, np.cos(phi), -np.sin(phi)],
         [0, np.sin(phi), np.cos(phi)]
     ])
+
+    print ("hip", str(hip))
     
-    rotated_foot = np.dot(roll_matrix, foot)
+    foot = np.dot(roll_matrix, foot)
+    knee = np.dot(roll_matrix, knee)
 
     # Plot the leg in 3D
     fig = plt.figure(figsize=(8, 8))
@@ -76,7 +86,7 @@ def plotLeg(theta1, theta2, phi, target):
     ax.plot([knee[0], foot[0]], [knee[1], foot[1]], [knee[2], foot[2]], 'ro-', label="Tibia")
 
     # Plot the rotated foot (end effector)
-    ax.scatter(rotated_foot[0], rotated_foot[1], rotated_foot[2], color='green', label='End-Effector (Foot)')
+    ax.scatter(foot[0], foot[1], foot[2], color='green', label='End-Effector (Foot)')
 
     # Plot target position
     ax.scatter(target[0], target[1], target[2], color='yellow', label='Target')
@@ -90,7 +100,6 @@ def plotLeg(theta1, theta2, phi, target):
     # Display angles
     ax.text(hip[0] + 0.02, hip[1] - 0.02, hip[2], f"θ1: {np.degrees(theta1):.1f}°", color='red')
     ax.text(knee[0] + 0.02, knee[1] - 0.02, knee[2], f"θ2: {np.degrees(theta2):.1f}°", color='blue')
-    ax.text(rotated_foot[0] + 0.02, rotated_foot[1] - 0.02, rotated_foot[2], f"φ: {np.degrees(phi):.1f}°", color='green')
 
     ax.legend()
     plt.show()
