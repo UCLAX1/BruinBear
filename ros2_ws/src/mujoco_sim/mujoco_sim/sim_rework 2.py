@@ -1,26 +1,17 @@
 import mujoco as mj
 from mujoco.glfw import glfw
 import numpy as np
-import os
-import time
+
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
 
-# xml_path = 'hello.xml' #xml file (assumes this is in the same folder as this file)
-simend = 10 #simulation time
+
 print_camera_config = 1 #set to 1 to print camera config
                         #this is useful for initializing view of the model
 
-# For callback functions
-button_left = False
-button_middle = False
-button_right = False
-lastx = 0
-lasty = 0
-
 modelPath = 'ros2_ws/quadruped-new/quadruped.xml'
-displayRefreshRate = 120
+displayRefreshRate = 240
 
 class ActuatorPositionPub(Node):
   def __init__(self):
@@ -36,89 +27,53 @@ class ActuatorPositionPub(Node):
     print("\033c") # disable if this causes problems, just clears the terminal
     self.get_logger().info('Actuator Positions: "%s"' % msg.data)
 
-
-def init_controller(model,data):
-    #initialize the controller here. This function is called once, in the beginning
-    pass
-
-def controller(model, data):
-    #put the controller here. This function is called inside the simulation.
-    pass
-
-def keyboard(window, key, scancode, act, mods):
-    if act == glfw.PRESS and key == glfw.KEY_BACKSPACE:
-        mj.mj_resetData(model, data)
-        mj.mj_forward(model, data)
-
-def mouse_button(window, button, act, mods):
-    # update button state
-    global button_left
-    global button_middle
-    global button_right
-
-    button_left = (glfw.get_mouse_button(
-        window, glfw.MOUSE_BUTTON_LEFT) == glfw.PRESS)
-    button_middle = (glfw.get_mouse_button(
-        window, glfw.MOUSE_BUTTON_MIDDLE) == glfw.PRESS)
-    button_right = (glfw.get_mouse_button(
-        window, glfw.MOUSE_BUTTON_RIGHT) == glfw.PRESS)
-
-    # update mouse position
-    glfw.get_cursor_pos(window)
-
-def mouse_move(window, xpos, ypos):
-    # compute mouse displacement, save
-    global lastx
-    global lasty
-    global button_left
-    global button_middle
-    global button_right
-
-    dx = xpos - lastx
-    dy = ypos - lasty
-    lastx = xpos
-    lasty = ypos
-
-    # no buttons down: nothing to do
-    if (not button_left) and (not button_middle) and (not button_right):
-        return
-
-    # get current window size
-    width, height = glfw.get_window_size(window)
-
-    # get shift key state
-    PRESS_LEFT_SHIFT = glfw.get_key(
-        window, glfw.KEY_LEFT_SHIFT) == glfw.PRESS
-    PRESS_RIGHT_SHIFT = glfw.get_key(
-        window, glfw.KEY_RIGHT_SHIFT) == glfw.PRESS
-    mod_shift = (PRESS_LEFT_SHIFT or PRESS_RIGHT_SHIFT)
-
-    # determine action based on mouse button
-    if button_right:
-        if mod_shift:
-            action = mj.mjtMouse.mjMOUSE_MOVE_H
-        else:
-            action = mj.mjtMouse.mjMOUSE_MOVE_V
-    elif button_left:
-        if mod_shift:
-            action = mj.mjtMouse.mjMOUSE_ROTATE_H
-        else:
-            action = mj.mjtMouse.mjMOUSE_ROTATE_V
-    else:
-        action = mj.mjtMouse.mjMOUSE_ZOOM
-
-    mj.mjv_moveCamera(model, action, dx/height,
-                      dy/height, scene, cam)
-
-def scroll(window, xoffset, yoffset):
-    action = mj.mjtMouse.mjMOUSE_ZOOM
-    mj.mjv_moveCamera(model, action, 0.0, -0.05 *
-                      yoffset, scene, cam)
-
-#get the full path
-# dirname = os.path.dirname(__file__)
-# abspath = os.path.join(dirname + "/" + xml_path)
-# xml_path = abspath
+keyBoardControl = 'none'
+cameraControl = 'none'
+def keyboard_callback(window, key, scancode, action, mods):
+    global keyBoardControl, cameraControl
+    if action == glfw.PRESS or action == glfw.REPEAT:  # Handle key press or hold
+        if key == glfw.KEY_W:  # Move forward)
+            keyBoardControl = 'fwd'
+        elif key == glfw.KEY_A:  # Turn left
+            keyBoardControl = 'lft'
+        elif key == glfw.KEY_D:  # Turn right
+            keyBoardControl = 'rgt'
+        elif key == glfw.KEY_S:
+            keyBoardControl = 'bck'
+        elif key == glfw.KEY_X:  # Neutral position or stop
+            keyBoardControl = 'nut'
+        elif key == glfw.KEY_UP:
+            cameraControl = 'up'
+        elif key == glfw.KEY_DOWN:
+            cameraControl = 'down'
+        elif key == glfw.KEY_RIGHT:
+            cameraControl = 'right'
+        elif key == glfw.KEY_LEFT:
+            cameraControl = 'left'
+        elif key == glfw.KEY_DELETE:
+            cameraControl = 'home'
+        
+    elif action == glfw.RELEASE:
+        if key == glfw.KEY_W:  # Move forward
+            keyBoardControl = 'nut'
+        elif key == glfw.KEY_A:  # Turn left
+            keyBoardControl = 'nut'
+        elif key == glfw.KEY_D:  # Turn right
+            keyBoardControl = 'nut'
+        elif key == glfw.KEY_S:
+            keyBoardControl = 'nut'
+        elif key == glfw.KEY_X:  # Neutral position or stop
+            keyBoardControl = 'nut'
+        elif key == glfw.KEY_UP:
+            cameraControl = 'none'
+        elif key == glfw.KEY_DOWN:
+            cameraControl = 'none'
+        elif key == glfw.KEY_RIGHT:
+            cameraControl = 'none'
+        elif key == glfw.KEY_LEFT:
+            cameraControl = 'none'
+        elif key == glfw.KEY_DELETE:
+            cameraControl = 'none'
 
 # MuJoCo data structures
 model = mj.MjModel.from_xml_path(modelPath)  # MuJoCo model
@@ -126,35 +81,8 @@ data = mj.MjData(model)                     # MuJoCo data
 cam = mj.MjvCamera()                        # Abstract camera
 opt = mj.MjvOption()                        # visualization options
 
-# Init GLFW, create window, make OpenGL context current, request v-sync
-glfw.init()
-window = glfw.create_window(1200, 900, "Quadraped", None, None)
-glfw.make_context_current(window)
-glfw.swap_interval(1)
-
-# initialize visualization data structures
-mj.mjv_defaultCamera(cam)
-mj.mjv_defaultOption(opt)
-scene = mj.MjvScene(model, maxgeom=10000)
-context = mj.MjrContext(model, mj.mjtFontScale.mjFONTSCALE_150.value)
-
-# install GLFW mouse and keyboard callbacks
-glfw.set_key_callback(window, keyboard)
-glfw.set_cursor_pos_callback(window, mouse_move)
-glfw.set_mouse_button_callback(window, mouse_button)
-glfw.set_scroll_callback(window, scroll)
-
-# Example on how to set camera configuration
-cam.azimuth = 45
-cam.elevation = -35
-cam.distance = 2
-cam.lookat = np.array([0.0, 0.0, 0])
-
-#initialize the controller
-init_controller(model,data)
 
 #set the controller
-mj.set_mjcb_control(controller)
 FRH = mj.mj_name2id(model, mj.mjtObj.mjOBJ_ACTUATOR, 'FR-H-servo')
 FLH = mj.mj_name2id(model, mj.mjtObj.mjOBJ_ACTUATOR, 'FL-H-servo')
 BRH = mj.mj_name2id(model, mj.mjtObj.mjOBJ_ACTUATOR, 'BR-H-servo')
@@ -187,14 +115,8 @@ def calcActRotation(tx, ty, tz, backleg):
     dT = np.sqrt(tx**2 + ty**2 + tz**2)
     kneeHipPaw = np.arccos((r1**2 + dT**2 - r2**2)/(2 * r1 * dT))
     pawKneeHip = np.arccos((r1**2 + r2**2 - dT**2)/(2 * r1 * r2))
-    print('pawKneeHip', np.rad2deg(pawKneeHip))
-    print('kneeHipPaw', np.rad2deg(kneeHipPaw))
-
 
     hip = np.arccos(-tx/dT) - kneeHipPaw
-    print(np.arctan(-tx/(ty)))
-    print((np.arccos((-tx)/dT) - np.pi/2) * -1)
-
     knee = np.pi - pawKneeHip
 
     if backleg:
@@ -205,12 +127,14 @@ def calcActRotation(tx, ty, tz, backleg):
         knee = np.pi - pawKneeHip
     
     phi = np.arccos(ty/dT)
-    print("phi: " + str(phi))
+    if(tz < 0):
+        phi *= -1
+
+    if knee > np.deg2rad(60):
+        print('out of range')
     return knee, hip, phi
 
 def moveLeg(actuator, position, actType, backLeg):
-    global globalHipStatus
-    global globalKneeStatus
     xPos = position[0]
     yPos = position[1]
     zPos = position[2]
@@ -222,24 +146,14 @@ def moveLeg(actuator, position, actType, backLeg):
     if actType == 'hip':
         if hipRotTarg < data.ctrl[actuator]:
             data.ctrl[actuator] -= motorSpeed
-            globalHipStatus = 'moving'
         else:
             data.ctrl[actuator] += motorSpeed
-            globalHipStatus = 'moving'
-
-        if data.ctrl[actuator] >= hipRotTarg - 0.001 and data.ctrl[actuator] <= hipRotTarg + 0.001:
-            globalHipStatus = 'not moving'
 
     if actType == 'knee':
         if kneeRotTarg < data.ctrl[actuator]:
             data.ctrl[actuator] -= motorSpeed
-            globalKneeStatus = 'moving'
         else:
             data.ctrl[actuator] += motorSpeed
-            globalKneeStatus = 'moving'
-
-        if data.ctrl[actuator] >= kneeRotTarg - 0.001 and data.ctrl[actuator] <= kneeRotTarg + 0.001:
-            globalKneeStatus = 'not moving'
 
     if actType == 'roll':
         if rollRotTarg < data.ctrl[actuator]:
@@ -248,91 +162,74 @@ def moveLeg(actuator, position, actType, backLeg):
             data.ctrl[actuator] += motorSpeed
     
 
-def layDown():
-    global globalRobotState
-    global globalHipStatus
-    if globalRobotState == 'laying down':
-        positionTargetX = 0
-        positionTargetY = 0.05
-        moveLeg(FLH, [positionTargetX,positionTargetY],'hip')
-        moveLeg(FLK, [positionTargetX,positionTargetY],'knee')
-
-        moveLeg(FRH, [positionTargetX,positionTargetY],'hip')
-        moveLeg(FRK, [positionTargetX,positionTargetY],'knee')
-
-        moveLeg(BLH, [positionTargetX,positionTargetY],'hip')
-        moveLeg(BLK, [positionTargetX,positionTargetY],'knee')
-
-        moveLeg(BRH, [positionTargetX,positionTargetY],'hip')
-        moveLeg(BRK, [positionTargetX,positionTargetY],'knee')
-
-        if globalHipStatus == 'not moving' and globalKneeStatus == 'not moving':
-            globalRobotState = 'finished'
-    elif globalRobotState == 'finished' or globalRobotState == 'start':
-        globalRobotState = 'laying down'
-
-def neutralPos():
-    global globalRobotState
-    global globalHipStatus
-    if globalRobotState == 'neutral pos':
-        positionTargetX = 0.06
-        positionTargetY = 0.3
-        positionTargetZ = 0.1
-        moveLeg(FLH, [positionTargetX,positionTargetY, positionTargetZ],'hip', False)
-        moveLeg(FLK, [positionTargetX,positionTargetY, positionTargetZ],'knee', False)
-
-        moveLeg(FRH, [positionTargetX,positionTargetY, positionTargetZ],'hip', False)
-        moveLeg(FRK, [positionTargetX,positionTargetY,positionTargetZ],'knee', False)
-
-        moveLeg(BLH, [-positionTargetX,positionTargetY,positionTargetZ],'hip', True)
-        moveLeg(BLK, [-positionTargetX,positionTargetY,positionTargetZ],'knee', True)
-
-        moveLeg(BRH, [-positionTargetX,positionTargetY,positionTargetZ],'hip', True)
-        moveLeg(BRK, [-positionTargetX,positionTargetY,positionTargetZ],'knee', True)
-        if globalHipStatus == 'not moving' and globalKneeStatus =='not moving':
-            globalRobotState = 'finished'
-    elif globalRobotState == 'finished' or globalRobotState == 'start':
-        globalRobotState = 'neutral pos'
-def pushUp():
-    layDown()
-    neutralPos()
-
 
 walkCounter = 0
-walkingPosX = 0.02
+walkingPosX = 0.03
 walkingLiftPosX = walkingPosX/2
-walkingPosY = 0.34
-walkingLiftPosY = 0.33
-rearOffset = 0.0
+walkingPosY = 0.35
+walkingLiftPosY = 0.335
+walkingPosZ = 0.0
+turnOffset = 0.1
 class RobotStateMachine:
     walkCounter = 0
     def __init__(self):
         self.state = 'get neutral'
-        self.direction = 1  # Set to 1 for forward, -1 for backward
 
-    def step(self):
+    def step(self, direction):
         # print(self.state)
         if (self.state == 'get neutral'):
             self.neutralPos()
         elif self.state == 'INIT':
-            self.FL_BR_Drop(-self.direction)
-            self.FR_BL_Lift(self.direction)
+            self.FL_BR_Drop(-direction)
+            self.FR_BL_Lift(direction)
         elif self.state == 'FR_BL Lifted':
-            self.FR_BL_Drop(self.direction)
+            self.FR_BL_Drop(direction)
         elif self.state == 'FR_BL Dropped':
-            self.FR_BL_Drop(-self.direction)
-            self.FL_BR_Lift(self.direction)
+            self.FR_BL_Drop(-direction)
+            self.FL_BR_Lift(direction)
         elif self.state == 'FL_BR Lifted':
-            self.FL_BR_Drop(self.direction)
+            self.FL_BR_Drop(direction)
         elif self.state == 'FL_BR Dropped':
             # print("Sequence complete: Resetting to INIT")
             self.walkCounter += 1
             self.state = 'INIT'  # Reset or set up for next step
 
+    def turn(self, direction):
+        if direction == "right":
+            if(self.state == 'get neutral'):
+                self.neutralPos()
+            elif self.state == 'INIT':
+                self.liftDiagonals('right', 'extended')
+            elif self.state == 'right_diagonals_lifted':
+                self.extendDiagonal('right',1)
+            elif self.state == 'right_extended1':
+                self.extendDiagonal('left',1)
+            elif self.state == 'left_extended1':
+                self.retractDiag('right',1)
+            elif self.state == 'right_retracted1':
+                self.retractDiag('left',2)
+            elif self.state == 'left_retracted2':
+                self.state = "INIT"
+        elif direction == 'left':
+            if(self.state == 'get neutral'):
+                self.neutralPos()
+            elif self.state == 'INIT':
+                self.liftDiagonals('left', 'extended')
+            elif self.state == 'left_diagonals_lifted':
+                self.extendDiagonal('left',1)
+            elif self.state == 'left_extended1':
+                self.extendDiagonal('right',1)
+            elif self.state == 'right_extended1':
+                self.retractDiag('left',1)
+            elif self.state == 'left_retracted1':
+                self.retractDiag('right',2)
+            elif self.state == 'right_retracted2':
+                self.state = "INIT"
+
     def neutralPos(self):
         positionTargetX = 0.02
         positionTargetY = .34
-        positionTargetZ = 0.1
+        positionTargetZ = 0.0
         moveLeg(FLH, [positionTargetX,positionTargetY,positionTargetZ],'hip', False)
         moveLeg(FLK, [positionTargetX,positionTargetY,positionTargetZ],'knee', False)
         moveLeg(FLR, [positionTargetX,positionTargetY,positionTargetZ],'roll', False)
@@ -356,54 +253,190 @@ class RobotStateMachine:
 
 
     def FR_BL_Lift(self, d):
-        global walkingLiftPosX, walkingLiftPosY, rearOffset
-        moveLeg(FRK, [walkingLiftPosX * d, walkingLiftPosY], 'knee', False)
-        moveLeg(FRH, [walkingLiftPosX * d, walkingLiftPosY], 'hip', False)
-        moveLeg(BLK, [walkingLiftPosX * -d, walkingLiftPosY+ rearOffset], 'knee', True)
-        moveLeg(BLH, [walkingLiftPosX * -d, walkingLiftPosY+ rearOffset], 'hip', True)
+        global walkingLiftPosX, walkingLiftPosY, walkingPosZ
+        moveLeg(FRK, [walkingLiftPosX * d, walkingLiftPosY, walkingPosZ], 'knee', False)
+        moveLeg(FRH, [walkingLiftPosX * d, walkingLiftPosY, walkingPosZ], 'hip', False)
+        moveLeg(FRR, [walkingLiftPosX * d,walkingLiftPosY,walkingPosZ],'roll', False)
+
+        moveLeg(BLK, [walkingLiftPosX * d, walkingLiftPosY, walkingPosZ], 'knee', True)
+        moveLeg(BLH, [walkingLiftPosX * d, walkingLiftPosY, walkingPosZ], 'hip', True)
+        moveLeg(BLR, [walkingLiftPosX * d, walkingLiftPosY, walkingPosZ], 'roll', True)
+      
+
         
-        if self.check_position(FRK, 'knee', walkingLiftPosX * d, walkingLiftPosY, False) \
-                and self.check_position(BLK, 'knee', walkingLiftPosX * -d, walkingLiftPosY+ rearOffset, True):
+        if self.check_position(FRK, 'knee', walkingLiftPosX * d, walkingLiftPosY, walkingPosZ, False) \
+                and self.check_position(BLK, 'knee', walkingLiftPosX * d, walkingLiftPosY,walkingPosZ, True):
             self.state = 'FR_BL Lifted'
 
     def FR_BL_Drop(self, d):
-        global walkingPosX, walkingPosY, rearOffset
-        moveLeg(FRK, [walkingPosX * d, walkingPosY], 'knee', False)
-        moveLeg(FRH, [walkingPosX * d, walkingPosY], 'hip', False)
-        moveLeg(BLK, [walkingPosX * -d, walkingPosY], 'knee', True)
-        moveLeg(BLH, [walkingPosX * -d, walkingPosY], 'hip', True)
+        global walkingPosX, walkingPosY, walkingPosZ
+        moveLeg(FRK, [walkingPosX * d, walkingPosY, walkingPosZ], 'knee', False)
+        moveLeg(FRH, [walkingPosX * d, walkingPosY, walkingPosZ], 'hip', False)
+        moveLeg(FRR, [walkingPosX * d, walkingPosY, walkingPosZ], 'roll', False)
+
+        moveLeg(BLK, [walkingPosX * d, walkingPosY, walkingPosZ], 'knee', True)
+        moveLeg(BLH, [walkingPosX * d, walkingPosY, walkingPosZ], 'hip', True)
+        moveLeg(BLR, [walkingPosX * d, walkingPosY, walkingPosZ], 'roll', True)
         
-        if self.check_position(FRK, 'knee', walkingPosX * d, walkingPosY, False) \
-                and self.check_position(BLK, 'knee', walkingPosX * -d, walkingPosY, True):
+        if self.check_position(FRK, 'knee', walkingPosX * d, walkingPosY, walkingPosZ, False) \
+                and self.check_position(BLK, 'knee', walkingPosX * d, walkingPosY,walkingPosZ, True):
             self.state = 'FR_BL Dropped'
 
 
     def FL_BR_Lift(self, d):
-        global walkingLiftPosX, walkingLiftPosY, rearOffset
-        moveLeg(FLK, [walkingLiftPosX * d, walkingLiftPosY], 'knee', False)
-        moveLeg(FLH, [walkingLiftPosX * d, walkingLiftPosY], 'hip', False)
-        moveLeg(BRK, [walkingLiftPosX * -d, walkingLiftPosY], 'knee', True)
-        moveLeg(BRH, [walkingLiftPosX * -d, walkingLiftPosY], 'hip', True)
+        global walkingLiftPosX, walkingLiftPosY, walkingPosZ
+        moveLeg(FLK, [walkingLiftPosX * d, walkingLiftPosY, walkingPosZ], 'knee', False)
+        moveLeg(FLH, [walkingLiftPosX * d, walkingLiftPosY, walkingPosZ], 'hip', False)
+        moveLeg(FLR, [walkingLiftPosX * d, walkingLiftPosY, walkingPosZ], 'roll', False)
+
+        moveLeg(BRK, [walkingLiftPosX * d, walkingLiftPosY, walkingPosZ], 'knee', True)
+        moveLeg(BRH, [walkingLiftPosX * d, walkingLiftPosY, walkingPosZ], 'hip', True)
+        moveLeg(BRR, [walkingLiftPosX * d, walkingLiftPosY, walkingPosZ], 'roll', True)
         
-        if self.check_position(FLK, 'knee', walkingLiftPosX * d, walkingLiftPosY, False) \
-                and self.check_position(BRK, 'knee', walkingLiftPosX * -d, walkingLiftPosY, True):
+        if self.check_position(FLK, 'knee', walkingLiftPosX * d, walkingLiftPosY, walkingPosZ, False) \
+                and self.check_position(BRK, 'knee', walkingLiftPosX * d, walkingLiftPosY, walkingPosZ, True):
             self.state = 'FL_BR Lifted'
 
     def FL_BR_Drop(self, d):
-        # global walkingPosStatus
-        global walkingPosX, walkingPosY, rearOffset
-        # if walkingPosStatus == 'FL BR Lifted' or walkingPosStatus == 'Dropping FL BR' or walkingPosStatus == 'none':
-            # walkingPosStatus = 'Dropping FL BR'
-        moveLeg(FLK, [walkingPosX * d, walkingPosY], 'knee', False)
-        moveLeg(FLH, [walkingPosX * d, walkingPosY], 'hip', False)
-        moveLeg(BRK, [walkingPosX * -d, walkingPosY], 'knee', True)
-        moveLeg(BRH, [walkingPosX * -d, walkingPosY], 'hip', True)
+        global walkingPosX, walkingPosY, walkingPosZ
+        moveLeg(FLK, [walkingPosX * d, walkingPosY, walkingPosZ], 'knee', False)
+        moveLeg(FLH, [walkingPosX * d, walkingPosY, walkingPosZ], 'hip', False)
+        moveLeg(FLR, [walkingPosX * d, walkingPosY, walkingPosZ], 'roll', False)
+
+        moveLeg(BRK, [walkingPosX * d, walkingPosY, walkingPosZ], 'knee', True)
+        moveLeg(BRH, [walkingPosX * d, walkingPosY, walkingPosZ], 'hip', True)
+        moveLeg(BRR, [walkingPosX * d, walkingPosY, walkingPosZ], 'roll', True)
         
-        if self.check_position(FLK, 'knee', walkingPosX * d, walkingPosY, False) \
-                and self.check_position(BRK, 'knee', walkingPosX * -d, walkingPosY, True):
-            # walkingPosStatus = 'FL BR Dropped'
+        if self.check_position(FLK, 'knee', walkingPosX * d, walkingPosY, walkingPosZ, False) \
+                and self.check_position(BRK, 'knee', walkingPosX * d, walkingPosY, walkingPosZ, True):
             self.state = 'FL_BR Dropped'
 
+    def liftDiagonals(self, side, previousZ):
+        global walkingLiftPosY, walkingPosY, turnOffset
+        if previousZ == 'extended':
+            zVal = turnOffset
+        else:
+            zVal = 0
+
+        if side =='right':
+            moveLeg(FRK, [0, walkingLiftPosY, zVal], 'knee', False)
+            moveLeg(FRH, [0, walkingLiftPosY, zVal], 'hip', False)
+            moveLeg(FRR, [0, walkingLiftPosY, zVal], 'roll', False)
+
+            moveLeg(BLK, [0, walkingLiftPosY, zVal], 'knee', True)
+            moveLeg(BLH, [0, walkingLiftPosY, zVal], 'hip', True)
+            moveLeg(BLR, [0, walkingLiftPosY, zVal], 'roll', True)
+        else:
+            moveLeg(FLK, [0, walkingLiftPosY, zVal], 'knee', False)
+            moveLeg(FLH, [0, walkingLiftPosY, zVal], 'hip', False)
+            moveLeg(FLR, [0, walkingLiftPosY, zVal], 'roll', False)
+
+            moveLeg(BRK, [0, walkingLiftPosY, zVal], 'knee', True)
+            moveLeg(BRH, [0, walkingLiftPosY, zVal], 'hip', True)
+            moveLeg(BRR, [0, walkingLiftPosY, zVal], 'roll', True)
+       
+        if side == 'right':
+            if self.check_position(FRK, 'knee', 0, walkingLiftPosY, zVal, False) \
+                    and self.check_position(BLK, 'knee', 0, walkingLiftPosY, zVal, True):
+                self.state = 'right_diagonals_lifted'
+        else:
+            if self.check_position(FLK, 'knee', 0, walkingLiftPosY, zVal, False) \
+                    and self.check_position(BRK, 'knee', 0, walkingLiftPosY, zVal, True):
+                self.state = 'left_diagonals_lifted'
+
+
+    def dropDiagonals(self, side, previousZ):
+        global walkingLiftPosY, walkingPosY, turnOffset
+        if previousZ == 'extended':
+            zVal = turnOffset
+        else:
+            zVal = 0
+
+        if side =='left':
+            moveLeg(FLK, [0, walkingPosY, zVal], 'knee', False)
+            moveLeg(FLH, [0, walkingPosY, zVal], 'hip', False)
+            moveLeg(FLR, [0, walkingPosY, zVal], 'roll', False)
+
+            moveLeg(BRK, [0, walkingPosY, zVal], 'knee', True)
+            moveLeg(BRH, [0, walkingPosY, zVal], 'hip', True)
+            moveLeg(BRR, [0, walkingPosY, zVal], 'roll', True)
+        else:
+            moveLeg(FRK, [0, walkingPosY, zVal], 'knee', False)
+            moveLeg(FRH, [0, walkingPosY, zVal], 'hip', False)
+            moveLeg(FRR, [0, walkingPosY, zVal], 'roll', False)
+
+            moveLeg(BLK, [0, walkingPosY, zVal], 'knee', True)
+            moveLeg(BLH, [0, walkingPosY, zVal], 'hip', True)
+            moveLeg(BLR, [0, walkingPosY, zVal], 'roll', True)
+    
+        if side == 'right':
+            if self.check_position(FRK, 'knee', 0, walkingPosY, zVal, False) \
+                    and self.check_position(BLK, 'knee', 0, walkingPosY, zVal, True):
+                self.state = 'right_dropped'
+        else:
+            if self.check_position(FLK, 'knee', 0, walkingPosY, zVal, False) \
+                    and self.check_position(BRK, 'knee', 0, walkingPosY, zVal, True):
+                self.state = 'left_dropped'
+
+
+        
+    def extendDiagonal(self, side, mode):
+        global turnOffset
+        if side =='left':
+            moveLeg(FLK, [0, walkingPosY, turnOffset], 'knee', False)
+            moveLeg(FLH, [0, walkingPosY, turnOffset], 'hip', False)
+            moveLeg(FLR, [0, walkingPosY, turnOffset], 'roll', False)
+
+            moveLeg(BRK, [0, walkingPosY, turnOffset], 'knee', True)
+            moveLeg(BRH, [0, walkingPosY, turnOffset], 'hip', True)
+            moveLeg(BRR, [0, walkingPosY, turnOffset], 'roll', True)
+           
+        else:
+            moveLeg(FRK, [0, walkingPosY, turnOffset], 'knee', False)
+            moveLeg(FRH, [0, walkingPosY, turnOffset], 'hip', False)
+            moveLeg(FRR, [0, walkingPosY, turnOffset], 'roll', False)
+
+            moveLeg(BLK, [0, walkingPosY, turnOffset], 'knee', True)
+            moveLeg(BLH, [0, walkingPosY, turnOffset], 'hip', True)
+            moveLeg(BLR, [0, walkingPosY, turnOffset], 'roll', True)
+
+       
+        if side == 'right':
+            if self.check_position(FRK, 'knee', 0, walkingPosY, turnOffset, False) \
+                    and self.check_position(BLK, 'knee', 0, walkingPosY, turnOffset, True):
+                self.state = 'right_extended' + str(mode)
+        else:
+            if self.check_position(FLK, 'knee', 0, walkingPosY, turnOffset, False) \
+                    and self.check_position(BRK, 'knee', 0, walkingPosY, turnOffset, True):
+                self.state = 'left_extended' + str(mode)
+
+    def retractDiag(self,side, mode):
+        if side =='left':
+            moveLeg(FLK, [0, walkingPosY, 0], 'knee', False)
+            moveLeg(FLH, [0, walkingPosY, 0], 'hip', False)
+            moveLeg(FLR, [0, walkingPosY, 0], 'roll', False)
+
+            moveLeg(BRK, [0, walkingPosY, 0], 'knee', True)
+            moveLeg(BRH, [0, walkingPosY, 0], 'hip', True)
+            moveLeg(BRR, [0, walkingPosY, 0], 'roll', True)
+           
+        else:
+            moveLeg(FRK, [0, walkingPosY, 0], 'knee', False)
+            moveLeg(FRH, [0, walkingPosY, 0], 'hip', False)
+            moveLeg(FRR, [0, walkingPosY, 0], 'roll', False)
+
+            moveLeg(BLK, [0, walkingPosY, 0], 'knee', True)
+            moveLeg(BLH, [0, walkingPosY, 0], 'hip', True)
+            moveLeg(BLR, [0, walkingPosY, 0], 'roll', True)
+
+        if side == 'right':
+            if self.check_position(FRK, 'knee', 0, walkingPosY, 0, False) \
+                    and self.check_position(BLK, 'knee', 0, walkingPosY, 0, True):
+                self.state = 'right_retracted' + str(mode)
+        else:
+            if self.check_position(FLK, 'knee', 0, walkingPosY, 0, False) \
+                    and self.check_position(BRK, 'knee', 0, walkingPosY, 0, True):
+                self.state = 'left_retracted' + str(mode)
 
     def check_position(self, actIndex, actType, posX, posY, posZ,backLeg):
         global targetPosPub
@@ -420,7 +453,7 @@ class RobotStateMachine:
         return False
 
 robot_fsm = RobotStateMachine()
-
+        
 def getCoM():
     total_mass = 0
     com = np.zeros(3)
@@ -437,78 +470,89 @@ def getCoM():
 com_body_id = mj.mj_name2id(model, mj.mjtObj.mjOBJ_GEOM, "com_sphere")
 
 
-lookPosX = 0
-lookPosY = 0
+# Init GLFW, create window, make OpenGL context current, request v-sync
+glfw.init()
+window = glfw.create_window(int(1200), int(900), "Quadruped", None, None)
+glfw.make_context_current(window)
+glfw.swap_interval(1)
 
-# robotFSM = FiniteStateMachine()
+# initialize visualization data structures
+mj.mjv_defaultCamera(cam)
+mj.mjv_defaultOption(opt)
+scene = mj.MjvScene(model, maxgeom=10000)
+context = mj.MjrContext(model, mj.mjtFontScale.mjFONTSCALE_150.value)
+
+# install GLFW mouse and keyboard callbacks
+glfw.set_key_callback(window, keyboard_callback)
+
+cam.distance = 2
+cam.azimuth = 45
+cam.elevation = -35
+cam.orthographic = 1
+robot_fsm.__init__
 while not glfw.window_should_close(window):
     time_prev = data.time
     direction = 0
-    while data.time - time_prev < 1.0/displayRefreshRate:
-        counter += 1
-        # robotFSM.step()
-        # getCoM()
-        # data.geom_xpos[model.ngeom - 1] = getCoM
-        total_mass = 0
-        com = np.zeros(3)
-        for i in range(model.nbody):
-            mass = model.body_mass[i]
-            pos = data.xipos[i]
-            com += mass * pos
-            total_mass += mass
-        com /= total_mass
-        # print("CoM: " + str(com))
-        # print("CoM Sphere ID:", com_geom_id)
-        data.xpos[com_body_id] = com
-        # print(f"Updated CoM Sphere Position: {data.geom_xpos[com_geom_id]}")
+    # print (keyBoardControl)
+    while data.time - time_prev < 1.0 / displayRefreshRate:
+        # Keyboard Control
+        if keyBoardControl == 'fwd':
+            robot_fsm.step(1)
+        elif keyBoardControl == 'lft':
+            robot_fsm.turn("left")
+        elif keyBoardControl == 'rgt':
+            robot_fsm.turn('right')
+        elif keyBoardControl == 'bck':
+            robot_fsm.step(-1)
+        elif keyBoardControl == 'nut':
+            robot_fsm.neutralPos()
         
-        # robot_fsm.step()
-        robot_fsm.neutralPos()
-        # neutralPos()
-        # print(f"CoM Sphere xpos: {data.xpos[com_body_id]}")
-        # robot_fsm.neutralPos()
-        
+        if cameraControl == 'down':
+            cam.elevation -= 0.1
+        elif cameraControl == 'up':
+            cam.elevation += 0.1
+        elif cameraControl == 'right':
+            cam.azimuth -= 0.1
+        elif cameraControl == 'left':
+            cam.azimuth += 0.1
+        elif cameraControl == 'home':
+            if cam.azimuth > 45:
+                while cam.azimuth > 45:
+                    cam.azimuth -= 0.1
+            if cam.azimuth < 45:
+                while cam.azimuth < 45:
+                    cam.azimuth += 0.1
+            if cam.elevation > -35:
+                while cam.elevation > -35:
+                    cam.elevation -= 0.1
+            if cam.elevation < -35:
+                while cam.elevation < -35:
+                    cam.elevation += 0.1
+        # Step the MuJoCo simulation
+        mj.mj_step(model, data)
+        glfw.poll_events()
+
+        # Add rendering or debugging code here if needed
         if counter % 100 == 0:
             pass
-            # temp = ''
-            # hipTarget = str(calcActRotation(positionTargetX,positionTargetY)[1])
-            # kneeTarget = str(calcActRotation(positionTargetX,positionTargetY)[0])
-            # actuatorPositionNode.pub_actuator_pos()
-            # actuatorPositionNode.pub_actuator_pos(str(data.ctrl[FRH]) + ' ' + globalHipStatus + ' ' + globalRobotState + ' ' + str(walkingPosXFwd) + ' ' + str(walkCounter))
-       
-        mj.mj_step(model, data)
+            # Add any periodic debugging or state updates here
 
-
-    # if (data.time>=simend):
-    #     break
-
-    # get framebuffer viewport
-    viewport_width, viewport_height = glfw.get_framebuffer_size(
-        window)
+    # Handle rendering
+    viewport_width, viewport_height = glfw.get_framebuffer_size(window)
     viewport = mj.MjrRect(0, 0, viewport_width, viewport_height)
 
-    #print camera configuration (help to initialize the view)
-    # if (print_camera_config==1):
-    #     print('cam.azimuth =',cam.azimuth,';','cam.elevation =',cam.elevation,';','cam.distance = ',cam.distance)
-    #     print('cam.lookat =np.array([',cam.lookat[0],',',cam.lookat[1],',',cam.lookat[2],'])')
-    smoothing_factor = 0.1
+    # Camera updates (tracking robot position)
     robot_x = data.xpos[1][0]  # X-coordinate of the robot
-    robot_y = data.xpos[1][1]  # Y-coordinate of the robot 
+    robot_y = data.xpos[1][1]  # Y-coordinate of the robot
     cam.lookat = [robot_x, robot_y, 0.2]
 
-    cam.distance = 2  # Adjust this distance as needed
-    cam.azimuth = 0  # Keep or modify this for different angles
-    cam.elevation = -0 # Adjust the elevation if necessary
-    cam.orthographic = 1
+
+
     # Update scene and render
-    mj.mjv_updateScene(model, data, opt, None, cam,
-                       mj.mjtCatBit.mjCAT_ALL.value, scene)
+    mj.mjv_updateScene(model, data, opt, None, cam, mj.mjtCatBit.mjCAT_ALL.value, scene)
     mj.mjr_render(viewport, scene, context)
 
-    # swap OpenGL buffers (blocking call due to v-sync)
+    # Swap buffers
     glfw.swap_buffers(window)
-
-    # process pending GUI events, call GLFW callbacks
-    glfw.poll_events()
 
 glfw.terminate()
