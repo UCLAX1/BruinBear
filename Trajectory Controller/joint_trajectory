@@ -3,11 +3,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Define the via points (trajectory waypoints)
-viapoints = np.array([[-100, 0], [-50, 30], [0, 50], [50, 30], [100, 0], [50, 0], [0, 0], [-50, 0], [-100, 0]])
+viapoints = np.array([[-90, 0], [-100, 5], [-90, 10], [-50, 35], [0, 50], [50, 35], [90, 10], [100, 5], [90, 0], [50, 0], [0, 0], [-50, 0], [-90, 0], [-100, 5]])
+#To be determined
+time_segements = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 
 # Generate the trajectory (using quintic polynomial interpolation)
 # have lesser acceleration are start and endpoints
-tg1 = mstraj(viapoints, 1, 1, 5)
+tg1 = mstraj(viapoints, dt = 1, tacc = 1, tsegment = time_segements)
 
 # Extract the positions (q) from the trajectory
 positions = tg1.q  # This contains x, y positions as columns
