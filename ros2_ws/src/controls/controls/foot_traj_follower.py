@@ -74,24 +74,21 @@ def main(args=None):
     global dt
     global totalTrajTime
     
-    width = 0.1
-    height = 0.04
-    dt = 0.01
+    trajHeight = 0.02
+    trajWidth = trajHeight/5
+    dt = 0.001
     totalTrajTime = 10
     forwardStrokeTime = totalTrajTime/4
     backStrokeTime = (3*totalTrajTime)/4
-    homeY = -0.12
+    homeY = 0.28
 
-    viapoints = np.array([[-width/2, homeY],
-                          [0, height+homeY],
-                          [width/2, homeY],
-                          [0, homeY],
-                          [-width/2, homeY]])
+    viapoints = np.array([[0, homeY], [trajWidth/2, homeY+trajHeight], [0, homeY+trajHeight], [-trajWidth/2, homeY+trajHeight], [0, homeY]])
 
-    time_segments = [forwardStrokeTime/2, forwardStrokeTime/2, backStrokeTime/2, backStrokeTime/2]
+    time_segments = [forwardStrokeTime/2, backStrokeTime/2,  backStrokeTime/2, forwardStrokeTime/2]
+
     traj = mstraj(viapoints, dt, tacc = dt/4, tsegment = time_segments)
     positions = traj.q # number of positions is ~ totalTime/dt ish
-    timeSteps = len(positions)
+    timeSteps = len(positions) - 1
 
     #STEP 1: generate trajectories
     while walking:

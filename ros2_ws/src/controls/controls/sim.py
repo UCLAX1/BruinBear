@@ -193,8 +193,8 @@ def main(args=None):
         cam.lookat = [robot_x, robot_y, 0.2]
 
         cam.distance = 2  # Adjust this distance as needed
-        cam.azimuth = 45   # Keep or modify this for different angles
-        cam.elevation = -35 # Adjust the elevation if necessary
+        cam.azimuth = 0   # Keep or modify this for different angles
+        cam.elevation = 0 # Adjust the elevation if necessary
         # Update scene and render
         mj.mjv_updateScene(model, data, opt, None, cam,
                         mj.mjtCatBit.mjCAT_ALL.value, scene)

@@ -2,22 +2,28 @@ from roboticstoolbox import mstraj
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Define the via points (trajectory waypoints)
-viapoints = np.array([[-100, 0], [-50, 30], [0, 50], [50, 30], [100, 0], [50, 0], [0, 0], [-50, 0], [-100, 0]])
+width = 0.02 
+height = 0.28
+dt = 0.001
+totalTrajTime = 10
+forwardStrokeTime = totalTrajTime/4
+backStrokeTime = (3*totalTrajTime)/4
+homeY = 0.3
 
-# Generate the trajectory (using quintic polynomial interpolation)
-# have lesser acceleration are start and endpoints
-tg1 = mstraj(viapoints, 1, 1, 5)
+viapoints = np.array([[0, homeY], [width/2, homeY+height], [0, homeY+height], [-width/2, homeY+height], [0, homeY]])
 
-# Extract the positions (q) from the trajectory
-positions = tg1.q  # This contains x, y positions as columns
+time_segments = [forwardStrokeTime/2, backStrokeTime/2,  backStrokeTime/2, forwardStrokeTime/2]
+traj = mstraj(viapoints, dt, tacc = dt/4, tsegment = time_segments)
+positions = traj.q # number of positions is ~ totalTime/dt ish
+timeSteps = len(positions) - 1
+
 
 # Extract x and y positions from the trajectory data
 x_positions = positions[:, 0]  # First column contains x coordinates
 y_positions = positions[:, 1]  # Second column contains y coordinates
 
 # Plot x vs y (2D trajectory plot)
-plt.figure(figsize=(8, 6))
+plt.figure(figsize=(6, 8))
 plt.plot(x_positions, y_positions, marker='o', linestyle='-', color='b')
 plt.title("Trajectory in X-Y Plane")
 plt.xlabel("X Position")
