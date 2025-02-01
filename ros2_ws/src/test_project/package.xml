@@ -14,6 +14,7 @@
 
   <exec_depend>rclpy</exec_depend>
   <exec_depend>std_msgs</exec_depend>
+  <exec_depend>roboticstoolbox</exec_depend>
   <!-- <exec_depend>mediapipe</exec_depend>
   <exec_depend>opencv-python</exec_depend> -->
 

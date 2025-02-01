@@ -6,6 +6,7 @@ import time
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float32MultiArray
+from controls.foot_traj_follower import startPos
 
 # xml_path = 'hello.xml' #xml file (assumes this is in the same folder as this file)
 simend = 10 #simulation time
@@ -21,7 +22,7 @@ lasty = 0
 
 modelPath = 'Quadroped-XML/quadroped.xml'
 displayRefreshRate = 120
-joints = [0] * 8
+joints = startPos
 
 class jointPosSub(Node):
 
@@ -35,7 +36,7 @@ class jointPosSub(Node):
         self.subscription  # prevent unused variable warning
 
     def listener_callback(self, msg):
-        self.get_logger().info('recieved positions')
+        # self.get_logger().info('recieved positions')
         global joints 
         joints = msg.data
 
@@ -167,6 +168,7 @@ def main(args=None):
     simNode = jointPosSub()
     counter = 0
     global joints
+
     while not glfw.window_should_close(window):
         time_prev = data.time
         while data.time - time_prev < 1.0/displayRefreshRate:
@@ -179,7 +181,8 @@ def main(args=None):
             data.ctrl[FRK] = joints[5]
             data.ctrl[BRK] = joints[6]
             data.ctrl[BLK] = joints[7]
-            print(joints)
+            # simNode.get_logger().info("joint pos" + str(joints))
+            
 
             mj.mj_step(model, data)
 
