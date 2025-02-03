@@ -22,7 +22,7 @@ width = 0.14
 width2 = 0.08
 height = 0.03
 dt = 0.01
-totalTrajTime = 1
+totalTrajTime = 3
 trotting = True
 forwardStrokeTime = totalTrajTime/2 if trotting else totalTrajTime/4
 backStrokeTime = totalTrajTime/2 if trotting else (3*totalTrajTime)/4
@@ -144,6 +144,7 @@ def main(args=None):
     startTime = time.time()
     while walking:
         curTime = time.time() - startTime
+        
         tTraj = curTime % totalTrajTime
 
         #calculate the leg offsets for the gait

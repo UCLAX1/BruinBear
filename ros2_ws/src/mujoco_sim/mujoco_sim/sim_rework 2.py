@@ -11,8 +11,7 @@ print_camera_config = 1 #set to 1 to print camera config
                         #this is useful for initializing view of the model
 
 modelPath = 'ros2_ws/quadruped-new/quadruped.xml'
-displayRefreshRate = 240
-
+displayRefreshRate = 60
 class ActuatorPositionPub(Node):
   def __init__(self):
     super().__init__('actuator_pos_pub')
@@ -34,6 +33,7 @@ def keyboard_callback(window, key, scancode, action, mods):
     if action == glfw.PRESS or action == glfw.REPEAT:  # Handle key press or hold
         if key == glfw.KEY_W:  # Move forward)
             keyBoardControl = 'fwd'
+            print('w pressed')
         elif key == glfw.KEY_A:  # Turn left
             keyBoardControl = 'lft'
         elif key == glfw.KEY_D:  # Turn right
@@ -195,36 +195,26 @@ class RobotStateMachine:
             self.state = 'INIT'  # Reset or set up for next step
 
     def turn(self, direction):
-        if direction == "right":
-            if(self.state == 'get neutral'):
-                self.neutralPos()
-            elif self.state == 'INIT':
-                self.liftDiagonals('right', 'extended')
-            elif self.state == 'right_diagonals_lifted':
-                self.extendDiagonal('right',1)
-            elif self.state == 'right_extended1':
-                self.extendDiagonal('left',1)
-            elif self.state == 'left_extended1':
-                self.retractDiag('right',1)
-            elif self.state == 'right_retracted1':
-                self.retractDiag('left',2)
-            elif self.state == 'left_retracted2':
-                self.state = "INIT"
-        elif direction == 'left':
-            if(self.state == 'get neutral'):
-                self.neutralPos()
-            elif self.state == 'INIT':
-                self.liftDiagonals('left', 'extended')
-            elif self.state == 'left_diagonals_lifted':
-                self.extendDiagonal('left',1)
-            elif self.state == 'left_extended1':
-                self.extendDiagonal('right',1)
-            elif self.state == 'right_extended1':
-                self.retractDiag('left',1)
-            elif self.state == 'left_retracted1':
-                self.retractDiag('right',2)
-            elif self.state == 'right_retracted2':
-                self.state = "INIT"
+        oppositeDirection = 'right'
+        if direction == 'right':
+            oppositeDirection = 'left'
+        else:
+            oppositeDirection = 'right'
+
+        if(self.state == 'get neutral'):
+            self.neutralPos()
+        elif self.state == 'INIT':
+            self.liftDiagonals(f'{direction}', 'extended')
+        elif self.state == f'{direction}_diagonals_lifted':
+            self.extendDiagonal(f'{direction}',1)
+        elif self.state == f'{direction}_extended1':
+            self.extendDiagonal(f'{oppositeDirection}',1)
+        elif self.state == f'{oppositeDirection}_extended1':
+            self.retractDiag(f'{direction}',1)
+        elif self.state == f'{direction}_retracted1':
+            self.retractDiag(f'{oppositeDirection}',2)
+        elif self.state == f'{oppositeDirection}_retracted2':
+            self.state = "INIT"
 
     def neutralPos(self):
         positionTargetX = 0.02
@@ -474,7 +464,7 @@ com_body_id = mj.mj_name2id(model, mj.mjtObj.mjOBJ_GEOM, "com_sphere")
 glfw.init()
 window = glfw.create_window(int(1200), int(900), "Quadruped", None, None)
 glfw.make_context_current(window)
-glfw.swap_interval(1)
+# glfw.swap_interval(1)
 
 # initialize visualization data structures
 mj.mjv_defaultCamera(cam)
@@ -496,39 +486,40 @@ while not glfw.window_should_close(window):
     # print (keyBoardControl)
     while data.time - time_prev < 1.0 / displayRefreshRate:
         # Keyboard Control
-        if keyBoardControl == 'fwd':
-            robot_fsm.step(1)
-        elif keyBoardControl == 'lft':
-            robot_fsm.turn("left")
-        elif keyBoardControl == 'rgt':
-            robot_fsm.turn('right')
-        elif keyBoardControl == 'bck':
-            robot_fsm.step(-1)
-        elif keyBoardControl == 'nut':
-            robot_fsm.neutralPos()
+        # if keyBoardControl == 'fwd':
+        #     robot_fsm.step(1)
+        # elif keyBoardControl == 'lft':
+        #     robot_fsm.turn("left")
+        # elif keyBoardControl == 'rgt':
+        #     robot_fsm.turn('right')
+        # elif keyBoardControl == 'bck':
+        #     robot_fsm.step(-1)
+        # elif keyBoardControl == 'nut':
+        #     robot_fsm.neutralPos()
         
-        if cameraControl == 'down':
-            cam.elevation -= 0.1
-        elif cameraControl == 'up':
-            cam.elevation += 0.1
-        elif cameraControl == 'right':
-            cam.azimuth -= 0.1
-        elif cameraControl == 'left':
-            cam.azimuth += 0.1
-        elif cameraControl == 'home':
-            if cam.azimuth > 45:
-                while cam.azimuth > 45:
-                    cam.azimuth -= 0.1
-            if cam.azimuth < 45:
-                while cam.azimuth < 45:
-                    cam.azimuth += 0.1
-            if cam.elevation > -35:
-                while cam.elevation > -35:
-                    cam.elevation -= 0.1
-            if cam.elevation < -35:
-                while cam.elevation < -35:
-                    cam.elevation += 0.1
-        # Step the MuJoCo simulation
+        # if cameraControl == 'down':
+        #     cam.elevation -= 0.1
+        # elif cameraControl == 'up':
+        #     cam.elevation += 0.1
+        # elif cameraControl == 'right':
+        #     cam.azimuth -= 0.1
+        # elif cameraControl == 'left':
+        #     cam.azimuth += 0.1
+        # elif cameraControl == 'home':
+        #     if cam.azimuth > 45:
+        #         while cam.azimuth > 45:
+        #             cam.azimuth -= 0.1
+        #     if cam.azimuth < 45:
+        #         while cam.azimuth < 45:
+        #             cam.azimuth += 0.1
+        #     if cam.elevation > -35:
+        #         while cam.elevation > -35:
+        #             cam.elevation -= 0.1
+        #     if cam.elevation < -35:
+        #         while cam.elevation < -35:
+        #             cam.elevation += 0.1
+        # # Step the MuJoCo simulation
+        robot_fsm.turn('left')
         mj.mj_step(model, data)
         glfw.poll_events()
 
