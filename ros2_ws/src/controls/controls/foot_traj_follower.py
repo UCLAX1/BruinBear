@@ -47,9 +47,9 @@ zPos = 0.1
 xPos = 0
 
 viapoints = np.array([[xPos, homeY, 0],
-                    [xPos, homeY, -width/2],
-                    [xPos, height+homeY, 0],
                     [xPos, homeY, width/2],
+                    [xPos, height+homeY, 0],
+                    [xPos, homeY, -width/2],
                     [xPos, homeY, 0]]) # FL movement
 
 time_segments = [backStrokeTime/2, forwardStrokeTime/2, forwardStrokeTime/2, backStrokeTime/2]
