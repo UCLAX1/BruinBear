@@ -26,11 +26,31 @@ backStrokeTime = totalTrajTime/2 if trotting else (3*totalTrajTime)/4
 homeY = -0.3
 zPos = 0.1
 
-viapoints = np.array([[0, homeY, zPos],
-                    [-width/2, homeY, zPos],
-                    [0, height+homeY, zPos],
-                    [width/2, homeY, zPos],
-                    [0, homeY, zPos]])
+
+
+#  if(self.state == 'get neutral'):
+#                 self.neutralPos() # positionTargetX = 0.02, positionTargetY = .34, positionTargetZ = 0.0
+#             elif self.state == 'INIT': 
+#                 self.liftDiagonals('left', 'extended') # 0, 0.335, 0.1. For FL and BR
+#             elif self.state == 'left_diagonals_lifted':
+#                 self.extendDiagonal('left',1) # 0, 0.35, 0.1. FL and BR
+#             elif self.state == 'left_extended1':
+#                 self.extendDiagonal('right',1)  # 0, 0.35, 0.1. FR and BL
+#             elif self.state == 'right_extended1':
+#                 self.retractDiag('left',1) # 0, 0.35, 0. FL and BR
+#             elif self.state == 'left_retracted1':
+#                 self.retractDiag('right',2) # 0, 0.35, 0. FR and BL
+#             elif self.state == 'right_retracted2':
+#                 self.state = "INIT"
+
+
+xPos = 0
+
+viapoints = np.array([[xPos, homeY, 0],
+                    [xPos, homeY, -width/2],
+                    [xPos, height+homeY, 0],
+                    [xPos, homeY, width/2],
+                    [xPos, homeY, 0]]) # FL movement
 
 time_segments = [backStrokeTime/2, forwardStrokeTime/2, forwardStrokeTime/2, backStrokeTime/2]
 traj = mstraj(viapoints, dt, tacc = dt/4, tsegment = time_segments)
