@@ -9,7 +9,10 @@ def solveIK(t, backLeg=False):
     # # The shoulder is at the origin and the target position is defined as being in the 3rd or 4th quadrants
     tx = t[0] * -1
     ty = t[1] * -1
-    tz = t[2]
+    if (len(t) > 2):
+        tz = t[2]
+    else:
+        tz = 0
 
     dT = np.sqrt(tx**2 + ty**2 + tz**2)
     kneeHipPaw = np.arccos((r1**2 + dT**2 - r2**2)/(2 * r1 * dT))

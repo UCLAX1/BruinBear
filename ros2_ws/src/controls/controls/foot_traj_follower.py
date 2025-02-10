@@ -6,6 +6,7 @@ import time
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float32MultiArray, String
+from std_msgs.msg import Float32MultiArray, String
 import time
 from roboticstoolbox import mstraj
 import math
