@@ -5,94 +5,124 @@ import os
 import time
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Float32MultiArray
+from std_msgs.msg import Float32MultiArray, String
+from std_msgs.msg import Float32MultiArray, String
 import time
 from roboticstoolbox import mstraj
 import math
 from controls.inverse_kinematics import solveIK
+import controls.gaits as gaits
 
-r1 = 0.177
-r2 = 0.177
+#global gait 
+gait = "f"
 
-#initialize the trajectory and set the starting positions for the sim
-#TRAJECTORY AND GAIT PARAMATERS
-width = 0.15
-height = 0.03
-dt = 0.01
-totalTrajTime = 1
-trotting = True
-forwardStrokeTime = totalTrajTime/2 if trotting else totalTrajTime/4
-backStrokeTime = totalTrajTime/2 if trotting else (3*totalTrajTime)/4
-homeY = -0.3
+startPos = [0] * 12
+# startfront = solveIK([0,-0.3,0])
+# startback = solveIK([0,-0.3,0], True)
+# startPos = [startfront[0], startfront[0],
+#             startfront[1], startfront[1],
+#             startback[0], startback[0],
+#             startback[1], startback[1],
+#             0, 0, 0, 0]
 
-viapoints = np.array([[0, homeY],
-                    [-width/2, homeY],
-                    [0, height+homeY],
-                    [width/2, homeY],
-                    [0, homeY]])
-
-time_segments = [backStrokeTime/2, forwardStrokeTime/2, forwardStrokeTime/2, backStrokeTime/2]
-traj = mstraj(viapoints, dt, tacc = dt/4, tsegment = time_segments)
-positions = traj.q # number of positions is ~ totalTime/dt ish
-timeSteps = len(positions)
-#set the sim's starting position as the initial traj pos
-startPos = [solveIK(positions[0])[0], solveIK(positions[0])[0],
-            solveIK(positions[0], True)[0], solveIK(positions[0], True)[0],
-            solveIK(positions[0])[1], solveIK(positions[0])[1],
-            solveIK(positions[0], True)[1], solveIK(positions[0], True)[1],
-            0, 0, 0, 0]
 
 class JointPosPublisher(Node):
-  def __init__(self):
-    super().__init__('joint_pos_pub')
-    self.publisher_ = self.create_publisher(Float32MultiArray, 'joint_positions', 10)
-    timer_period = 1
-    self.timer = self.create_timer(timer_period, self.pub_actuator_pos)
+   def __init__(self):
+      super().__init__('joint_pos_pub')
+      self.publisher_ = self.create_publisher(Float32MultiArray, 'joint_positions', 10)
+      #self.subscription = self.create_subscription(String,'gait_control', self.listener_callback, 10)
+      timer_period = 1
+      self.timer = self.create_timer(timer_period, self.pub_actuator_pos)
+      #self.gait = ""
   
-  def pub_actuator_pos(self, joint_positions):
-    msg = Float32MultiArray()
-    msg.data = joint_positions
-    self.publisher_.publish(msg)
+   def pub_actuator_pos(self, joint_positions):
+      msg = Float32MultiArray()
+      msg.data = joint_positions
+      self.publisher_.publish(msg)
+   
+   # def listener_callback(self, msg):
+   #    self.get_logger().info('recieved gait')
+   #    #self.gait
+   #    self.gait = msg.data
 
-def findTimeStep(t):
-   t %= totalTrajTime
-   return math.floor((t/totalTrajTime)*timeSteps)
+
+
+# class jointPosSub(Node):
+
+#     def __init__(self):
+#         super().__init__('gait_sub')
+#         self.subscription = self.create_subscription(String,'gait', self.listener_callback, 10)
+#         self.subscription  # prevent unused variable warning
+
+#     def listener_callback(self, msg):
+#         # self.get_logger().info('recieved positions')
+#         global gait
+#         gait = msg.data
+
+
+startTime = time.time()
+gaitTraj = None
+prevGait = ""
+cycle = 0
+
+
+
+def GeneratePosition():
+   global gait, prevGait, startTime, trajNode, gaitTraj, cycle
+   
+   if prevGait != gait:
+      prevGait = gait
+      startTime = time.time()
+      
+      match gait:
+         case "forward" | "f":
+            gaitTraj = gaits.Walk(trajNode.get_logger())
+         case "right" | "r":
+            gaitTraj = gaits.WalkTurn(turnRight=True, logger=trajNode.get_logger())
+         case "left"|"l":
+            gaitTraj = gaits.WalkTurn(turnRight=False, logger=trajNode.get_logger())
+         case "backward"|"b":
+            gaitTraj = gaits.WalkBackward(trajNode.get_logger())
+         case "trot" | "t":
+            gaitTraj = gaits.Trot(trajNode.get_logger())
+
+   curTime = time.time() - startTime
+   pos = gaitTraj.getPos(curTime)
+   
+   posFL = solveIK(pos[0])
+   posFR = solveIK(pos[1])
+   posBR = solveIK(pos[2], True)
+   posBL = solveIK(pos[3], True)
+   joint_positions = [posFL[0], posFR[0], posBR[0], posBL[0], 
+                           posFL[1], posFR[1], posBR[1], posBL[1], 
+                           posFL[2], posFR[2], posBR[2], posBL[2]]
+   
+   # if (cycle % 100 == 0 ):
+   #    # trajNode.get_logger().info(str(gaitTraj))
+   #    #trajNode.get_logger().info(str(posFL))
+   # cycle += 1
+   
+   return joint_positions
    
 
 def main(args=None):
-    rclpy.init()
-    trajNode = JointPosPublisher()
-    walking = True
-
-    time.sleep(1) #wait for the model to drop in the sim
-
-    startTime = time.time()
-    while walking:
-        curTime = time.time() - startTime
-        tTraj = curTime % totalTrajTime
-
-        #calculate the leg offsets for the gait
-        tFL = (curTime)
-        tBR = (curTime - totalTrajTime/4)
-        tFR = (curTime - totalTrajTime/2)
-        tBL = (curTime - 3*totalTrajTime/4)
-        print('time', tBL)
-        print('findTimeStep', findTimeStep(tBL))
-        print('total time steps', timeSteps)
-
-        # trajNode.get_logger().info("time step " + str(timeSteps))
-        # trajNode.get_logger().info("pos at FL timestep " + str(positions[findTimeStep(tFL)]))
+   rclpy.init()
+   global trajNode 
+   trajNode = JointPosPublisher()
+   #trajNode.listener_callback()
+   #gait = trajNode.gait
 
 
-        posFL = solveIK(positions[findTimeStep(tFL)])
-        posFR = solveIK(positions[findTimeStep(tFR)])
-        posBR = solveIK(positions[findTimeStep(tBR)], True)
-        posBL = solveIK(positions[findTimeStep(tBL)], True)
+   walking = True
 
-        joint_positions = [posFL[0], posFR[0], posBR[0], posBL[0], 
-                           posFL[1], posFR[1], posBR[1], posBL[1], 
-                           0.0, 0.0, 0.0, 0.0]
-        trajNode.pub_actuator_pos(joint_positions)
+   #  gait = jointPosSub()
+   #  global joints
+
+   time.sleep(2)
+   #wait for the model to drop in the sim
+
+   while walking:
+      trajNode.pub_actuator_pos(GeneratePosition())
 
 if __name__ == '__main__':
     main()
