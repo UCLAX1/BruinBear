@@ -49,6 +49,8 @@ class FaceDetector():
         # Bottom Right  x1,y1
         cv2.line(img, (x1, y1), (x1 - l, y1), (255, 0, 255), t)
         cv2.line(img, (x1, y1), (x1, y1 - l), (255, 0, 255), t)
+        #Image Center 
+        cv2.circle(img, (int((x+x1)/2), int((y+y1)/2)), 5, (255,0,255), 1)
         return img
 
 
