@@ -42,20 +42,24 @@ class RealSenseNode(Node):
 
             # Convert depth frame to a numpy array
             depth_image = np.asanyarray(depth_frame.get_data())
-            min_index = np.argmin(depth_image)
-            min_distance = depth_image(min_index)
-
-            lowest_point = 'none'
-            if min_index[1] < depth_image.shape[1]/2:
-                lowest_point = 'bottom'
-            else:
-                lowest_point = 'top'
-            if min_index[0] < depth_image.shape[0]/2:
-                lowest_point += ' left'
-            else:
-                lowest_point += ' right'
+            
 
            
+
+         
+# Define grid size
+            grid_size = (4, 4)  # Number of rows and columns
+            h, w = depth_image.shape
+            cell_h, cell_w = h // grid_size[0], w // grid_size[1]
+            # Iterate through grid cells
+
+            depth_averages = np.zeros(grid_size)
+            for i in range(grid_size[0]):
+                for j in range(grid_size[1]):
+                    cell = depth_image[i * cell_h:(i + 1) * cell_h, j * cell_w:(j + 1) * cell_w]
+                    avg_depth = np.mean(cell)
+                    depth_averages[i, j] = avg_depth  # Store in the array
+
 
             center_point_depth = depth_image[depth_image.shape[0]//2, depth_image.shape[1]//2]
 
@@ -67,7 +71,8 @@ class RealSenseNode(Node):
             
             # self.get_logger().info("Published depth image. Depth @ center: " + str(center_point_depth) + 'mm')
 
-            self.get_logger().info("Published depth image. Lowest Point: " + lowest_point + ' ' + str(min_distance))
+            self.get_logger().info("Published depth image. Center Point Depth: " + str(center_point_depth))
+            # self.get_logger().info(f"Depth Averages Grid:\n{depth_averages}")
         except Exception as e:
             self.get_logger().error(f"Error publishing depth image: {e}")
 
