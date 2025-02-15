@@ -129,6 +129,60 @@ class WalkTurn(Gait):
                     self.positions_long[self.findTimeStep(tFR)],
                     self.positions_long[self.findTimeStep(tBR)],
                     self.positions_short[self.findTimeStep(tBL)]]
+        
+
+class TurnInPlaceNoRoll(Gait):
+    def __init__(self, turnRight, logger = None):
+        super().__init__(logger)
+        self.turnRight = turnRight
+        width = 0.08
+        height = 0.02
+        dt = 0.01
+        self.totalTrajTime = 1
+        forwardStrokeTime = self.totalTrajTime/2
+        backStrokeTime = self.totalTrajTime/2
+        homeY = -0.3
+        viapoints_forward = np.array([[0, homeY, 0],
+                            [-width/2, homeY, 0],
+                            [0, height+homeY, 0],
+                            [3*width/4, height+homeY, 0],
+                            [width/2, homeY, 0],
+                            [0, homeY, 0]])
+        
+        viapoints_backward = np.array([[0, homeY, 0],
+                            [width/2, homeY, 0],
+                            [0, height+homeY, 0],
+                            [-3*width/4, height+homeY, 0],
+                            [-width/2, homeY, 0],
+                            [0, homeY, 0]])
+
+
+        time_segments = [backStrokeTime/2, forwardStrokeTime/2, forwardStrokeTime/4, forwardStrokeTime/4, backStrokeTime/2]
+
+        traj_forward = mstraj(viapoints_forward, dt, tacc = dt/4, tsegment = time_segments)
+        traj_backward = mstraj(viapoints_backward, dt, tacc = dt/4, tsegment = time_segments)
+        self.positions_forward = traj_forward.q
+        self.positions_backward = traj_backward.q
+        self.timeSteps = len(self.positions_backward)
+
+    def getPos(self, time):
+        tFL = (time)
+        tFR = (time - self.totalTrajTime/2)
+        tBR = (time)
+        tBL = (time - self.totalTrajTime/2)
+    
+        if (self.turnRight):
+            return [self.positions_forward[self.findTimeStep(tFL)],
+                    self.positions_backward[self.findTimeStep(tFR)],
+                    self.positions_backward[self.findTimeStep(tBR)],
+                    self.positions_forward[self.findTimeStep(tBL)]]
+        else:
+            return [self.positions_backward[self.findTimeStep(tFL)],
+                    self.positions_forward[self.findTimeStep(tFR)],
+                    self.positions_forward[self.findTimeStep(tBR)],
+                    self.positions_backward[self.findTimeStep(tBL)]]
+        
+
 
 class WalkBackward(Gait):
     def __init__(self, logger = None):
