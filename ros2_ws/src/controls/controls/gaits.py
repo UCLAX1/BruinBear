@@ -37,7 +37,7 @@ class Walk(Gait):
         width = 0.15
         height = 0.03
         dt = 0.01
-        self.totalTrajTime = 2
+        self.totalTrajTime = 1
         trotting = True
         forwardStrokeTime = self.totalTrajTime/4
         backStrokeTime = (3*self.totalTrajTime)/4
@@ -87,7 +87,7 @@ class WalkTurn(Gait):
         width_short = 0.08
         height = 0.03
         dt = 0.01
-        self.totalTrajTime = 2
+        self.totalTrajTime = 1
         forwardStrokeTime = self.totalTrajTime/4
         backStrokeTime = (3*self.totalTrajTime)/4
         homeY = -0.3
@@ -265,12 +265,54 @@ class Trot(Gait):
                 self.positions[self.findTimeStep(tBR)],
                 self.positions[self.findTimeStep(tBL)]]
 
-class TurnInPlace(Gait):
+class TurnInPlaceWithRoll(Gait):
     def __init__(self, turnRight, logger = None):
         super().__init__(logger)
         self.turnRight = turnRight
-        #generate trajectories for turning in place
+        width = 0.1
+        height = 0.03
+        dt = 0.01
+        self.totalTrajTime = 1
+        trotting = True
+        forwardStrokeTime = self.totalTrajTime/2
+        backStrokeTime = self.totalTrajTime/2
+        homeY = -0.3
+        zPos = 0.1
+
+
+        xPos = 0
+        viapoints1 = np.array([[xPos, homeY, 0],
+                            [xPos, homeY,   width/2],
+                            [xPos, height+homeY, 0],
+                            [xPos, homeY, -width/2],
+                            [xPos, homeY, 0]])
+        viapoints2 = np.array([[xPos, homeY, 0],
+                            [xPos, homeY,   -width/2],
+                            [xPos, height+homeY, 0],
+                            [xPos, homeY, width/2],
+                            [xPos, homeY, 0]])
+        
+        time_segments = [backStrokeTime/2, forwardStrokeTime/2, forwardStrokeTime/2, backStrokeTime/2]
+        traj1 = mstraj(viapoints1, dt, tacc = dt/4, tsegment = time_segments)
+        traj2 = mstraj(viapoints2, dt, tacc = dt/4, tsegment = time_segments)
+        self.positions1 = traj1.q 
+        self.positions2 = traj2.q 
+        self.timeSteps = len(self.positions1)
 
     def getPos(self, time):
-        #return the joint positions for the given time
-        print("turning in place left")
+        tFL = (time)
+        tFR = (time - self.totalTrajTime/2)
+        tBR = (time)
+        tBL = (time - self.totalTrajTime/2)
+        
+        if self.turnRight:
+            return [self.positions1[self.findTimeStep(tFL)],
+                self.positions2[self.findTimeStep(tFR)],
+                self.positions1[self.findTimeStep(tBR)],
+                self.positions2[self.findTimeStep(tBL)]]
+        else:
+            return [self.positions2[self.findTimeStep(tFL)],
+                    self.positions1[self.findTimeStep(tFR)],
+                    self.positions2[self.findTimeStep(tBR)],
+                    self.positions1[self.findTimeStep(tBL)]]
+
