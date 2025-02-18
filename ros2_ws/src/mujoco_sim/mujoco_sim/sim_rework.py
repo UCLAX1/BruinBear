@@ -19,7 +19,7 @@ button_right = False
 lastx = 0
 lasty = 0
 
-modelPath = '/home/sara/git_projects/BruinBear/ros2_ws/Quadroped-XML/quadroped.xml'
+modelPath = 'ros2_ws/Quadroped-XML/quadroped_og.xml'
 displayRefreshRate = 120
 
 class ActuatorPositionPub(Node):
@@ -172,7 +172,7 @@ globalRobotState = 'start'
 globalHipStatus = 'not moving'
 globalKneeStatus = 'not moving'
 startedWalking = False
-motorSpeed = 0.0009
+motorSpeed = 0.001
 
 
 
@@ -196,16 +196,23 @@ def calcActRotation(tx, ty, backLeg):
         th3 += np.deg2rad(90)
     else:
         th3 -= np.deg2rad(90)
-    if backLeg:
-        th1 += np.deg2rad(200)
-        # th3 *= 1.2
-    th1 = np.pi - th1
+    # if backLeg:
+    #     th1 += np.deg2rad(202)
+    #     # th1 += (180 - th3)
+    #     # th3 *= 1.2
+    # # th1 = np.pi - th1
     if th3 <= (np.pi/2):
         if th3 > 0:
             th3 *= -1
     if backLeg:
         th3 *= -1
-        th1 *= 1
+        th1 -= np.pi
+        # th1 *= 2
+        # th1 -= (th3 - (np.pi/2))
+        print(th3)
+        print(th1)
+    else:
+        th1 = np.pi - th1
     return th1, th3
 
 def moveLeg(actuator, position, actType, backLeg):
@@ -216,19 +223,6 @@ def moveLeg(actuator, position, actType, backLeg):
 
     hipRotTarg = calcActRotation(xPos,yPos, backLeg)[1]
     kneeRotTarg = calcActRotation(xPos,yPos, backLeg)[0]
-    # kneeRotTarg = np.pi - kneeRotTarg
-
-    # if hipRotTarg <= (np.pi/2):
-    #     if hipRotTarg > 0:
-    #         # print(str(actuator))
-    #         # print(str(hipRotTarg))
-    #         hipRotTarg *= -1
-    #         # exit()
-    #     # else:
-    #     #     kneeRotTarg *= -1
-    # if backLeg:
-    #     hipRotTarg *= -0.7
-    #     kneeRotTarg *= 0.7
     
     if actType == 'hip':
         if hipRotTarg < data.ctrl[actuator]:
@@ -281,7 +275,7 @@ def neutralPos():
     global globalHipStatus
     if globalRobotState == 'neutral pos':
         positionTargetX = 0.06
-        positionTargetY = 0.24
+        positionTargetY = 0.3
         moveLeg(FLH, [positionTargetX,positionTargetY],'hip', False)
         moveLeg(FLK, [positionTargetX,positionTargetY],'knee', False)
 
@@ -303,10 +297,10 @@ def pushUp():
 
 
 walkCounter = 0
-walkingPosX = 0.06
-walkingLiftPosX = 0.03
-walkingPosY = 0.22
-walkingLiftPosY = 0.17
+walkingPosX = 0.02
+walkingLiftPosX = walkingPosX/2
+walkingPosY = 0.3
+walkingLiftPosY = 0.29
 rearOffset = 0.0
 class RobotStateMachine:
     walkCounter = 0
@@ -315,7 +309,7 @@ class RobotStateMachine:
         self.direction = 1  # Set to 1 for forward, -1 for backward
 
     def step(self):
-        print(self.state)
+        # print(self.state)
         if (self.state == 'get neutral'):
             self.neutralPos()
         elif self.state == 'INIT':
@@ -329,12 +323,12 @@ class RobotStateMachine:
         elif self.state == 'FL_BR Lifted':
             self.FL_BR_Drop(self.direction)
         elif self.state == 'FL_BR Dropped':
-            print("Sequence complete: Resetting to INIT")
+            # print("Sequence complete: Resetting to INIT")
             self.walkCounter += 1
             self.state = 'INIT'  # Reset or set up for next step
 
     def neutralPos(self):
-        positionTargetX = 0.08
+        positionTargetX = 0.1
         positionTargetY = 0.3
         moveLeg(FLH, [positionTargetX,positionTargetY],'hip', False)
         moveLeg(FLK, [positionTargetX,positionTargetY],'knee', False)
@@ -342,13 +336,13 @@ class RobotStateMachine:
         moveLeg(FRH, [positionTargetX,positionTargetY],'hip', False)
         moveLeg(FRK, [positionTargetX,positionTargetY],'knee', False)
 
-        moveLeg(BLH, [positionTargetX *2,positionTargetY],'hip', True)
-        moveLeg(BLK, [positionTargetX *2,positionTargetY],'knee', True)
+        moveLeg(BLH, [positionTargetX,positionTargetY],'hip', True)
+        moveLeg(BLK, [positionTargetX,positionTargetY],'knee', True)
 
-        moveLeg(BRH, [positionTargetX *2,positionTargetY],'hip', True)
-        moveLeg(BRK, [positionTargetX *2,positionTargetY],'knee', True)
+        moveLeg(BRH, [positionTargetX,positionTargetY],'hip', True)
+        moveLeg(BRK, [positionTargetX,positionTargetY],'knee', True)
         if self.check_position(FRK, 'knee', positionTargetX, positionTargetY, False) \
-                and self.check_position(BRK, 'knee', positionTargetX *2, positionTargetY, True):
+                and self.check_position(BRK, 'knee', positionTargetX, positionTargetY, True):
             self.state = 'INIT'
 
 
@@ -416,7 +410,6 @@ class RobotStateMachine:
             return True
         return False
 
-# Main simulation loop
 robot_fsm = RobotStateMachine()
 
 
@@ -433,6 +426,7 @@ while not glfw.window_should_close(window):
         counter += 1
         # robotFSM.step()
         robot_fsm.step()
+        # robot_fsm.neutralPos()
         
         if counter % 100 == 0:
             pass
@@ -463,8 +457,8 @@ while not glfw.window_should_close(window):
     cam.lookat = [robot_x, robot_y, 0.2]
 
     cam.distance = 2  # Adjust this distance as needed
-    cam.azimuth = 0   # Keep or modify this for different angles
-    cam.elevation = 0# Adjust the elevation if necessary
+    cam.azimuth = 45   # Keep or modify this for different angles
+    cam.elevation = -35 # Adjust the elevation if necessary
     # Update scene and render
     mj.mjv_updateScene(model, data, opt, None, cam,
                        mj.mjtCatBit.mjCAT_ALL.value, scene)

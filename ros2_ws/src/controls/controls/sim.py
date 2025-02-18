@@ -6,6 +6,7 @@ import time
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float32MultiArray
+from controls.foot_traj_follower import startPos
 
 # xml_path = 'hello.xml' #xml file (assumes this is in the same folder as this file)
 simend = 10 #simulation time
@@ -19,9 +20,9 @@ button_right = False
 lastx = 0
 lasty = 0
 
-modelPath = 'Quadroped-XML/quadroped.xml'
+modelPath = 'quadruped-new/quadruped.xml'
 displayRefreshRate = 120
-joints = [0] * 8
+joints = startPos
 
 class jointPosSub(Node):
 
@@ -35,7 +36,7 @@ class jointPosSub(Node):
         self.subscription  # prevent unused variable warning
 
     def listener_callback(self, msg):
-        self.get_logger().info('recieved positions')
+        # self.get_logger().info('recieved positions')
         global joints 
         joints = msg.data
 
@@ -163,10 +164,16 @@ def main(args=None):
     BRK = mj.mj_name2id(model, mj.mjtObj.mjOBJ_ACTUATOR, 'BR-K-servo')
     BLK = mj.mj_name2id(model, mj.mjtObj.mjOBJ_ACTUATOR, 'BL-K-servo')
 
+    FRR = mj.mj_name2id(model, mj.mjtObj.mjOBJ_ACTUATOR, 'FR-R-servo')
+    FLR = mj.mj_name2id(model, mj.mjtObj.mjOBJ_ACTUATOR, 'FL-R-servo')
+    BRR = mj.mj_name2id(model, mj.mjtObj.mjOBJ_ACTUATOR, 'BR-R-servo')
+    BLR = mj.mj_name2id(model, mj.mjtObj.mjOBJ_ACTUATOR, 'BL-R-servo')
+
     rclpy.init()
     simNode = jointPosSub()
     counter = 0
     global joints
+
     while not glfw.window_should_close(window):
         time_prev = data.time
         while data.time - time_prev < 1.0/displayRefreshRate:
@@ -179,7 +186,11 @@ def main(args=None):
             data.ctrl[FRK] = joints[5]
             data.ctrl[BRK] = joints[6]
             data.ctrl[BLK] = joints[7]
-            print(joints)
+            data.ctrl[FLR] = joints[8]
+            data.ctrl[FRR] = joints[9]
+            data.ctrl[BRR] = joints[10]
+            data.ctrl[BLR] = joints[11]
+            
 
             mj.mj_step(model, data)
 
