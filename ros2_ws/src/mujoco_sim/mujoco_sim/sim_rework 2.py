@@ -10,15 +10,15 @@ from std_msgs.msg import String
 print_camera_config = 1 #set to 1 to print camera config
                         #this is useful for initializing view of the model
 
-modelPath = 'ros2_ws/quadruped-new/quadruped.xml'
-displayRefreshRate = 60
+modelPath = 'ros2_ws/quadruped-new/quadruped_o.xml'
+displayRefreshRate = 240
 class ActuatorPositionPub(Node):
   def __init__(self):
     super().__init__('actuator_pos_pub')
     self.publisher_ = self.create_publisher(String, 'actuator_postions', 10)
     timer_period = 1
     self.timer = self.create_timer(timer_period, self.pub_actuator_pos)
-  
+
   def pub_actuator_pos(self, actuator_positions):
     msg = String()
     msg.data = str(actuator_positions)
@@ -27,13 +27,13 @@ class ActuatorPositionPub(Node):
     self.get_logger().info('Actuator Positions: "%s"' % msg.data)
 
 keyBoardControl = 'none'
+cubeControl = 'none'
 cameraControl = 'none'
 def keyboard_callback(window, key, scancode, action, mods):
-    global keyBoardControl, cameraControl
+    global keyBoardControl, cameraControl, cubeControl
     if action == glfw.PRESS or action == glfw.REPEAT:  # Handle key press or hold
         if key == glfw.KEY_W:  # Move forward)
             keyBoardControl = 'fwd'
-            print('w pressed')
         elif key == glfw.KEY_A:  # Turn left
             keyBoardControl = 'lft'
         elif key == glfw.KEY_D:  # Turn right
@@ -52,6 +52,19 @@ def keyboard_callback(window, key, scancode, action, mods):
             cameraControl = 'left'
         elif key == glfw.KEY_DELETE:
             cameraControl = 'home'
+
+        if key == glfw.KEY_I:
+            cubeControl = 'cube_fwd'
+        elif key == glfw.KEY_K:
+            cubeControl = 'cube_bck'
+        elif key == glfw.KEY_L:
+            cubeControl = 'cube_left'
+        elif key == glfw.KEY_J:
+            cubeControl = 'cube_right'
+        elif key == glfw.KEY_U:
+            cubeControl = 'cube_rot_ccw'
+        elif key == glfw.KEY_O:
+            cubeControl = 'cube_rot_cw'
         
     elif action == glfw.RELEASE:
         if key == glfw.KEY_W:  # Move forward
@@ -64,7 +77,8 @@ def keyboard_callback(window, key, scancode, action, mods):
             keyBoardControl = 'nut'
         elif key == glfw.KEY_X:  # Neutral position or stop
             keyBoardControl = 'nut'
-        elif key == glfw.KEY_UP:
+        
+        if key == glfw.KEY_UP:
             cameraControl = 'none'
         elif key == glfw.KEY_DOWN:
             cameraControl = 'none'
@@ -74,6 +88,19 @@ def keyboard_callback(window, key, scancode, action, mods):
             cameraControl = 'none'
         elif key == glfw.KEY_DELETE:
             cameraControl = 'none'
+        
+        if key == glfw.KEY_I:
+            cubeControl = 'none'
+        elif key == glfw.KEY_K:
+            cubeControl = 'none'
+        elif key == glfw.KEY_J:
+            cubeControl = 'none'
+        elif key == glfw.KEY_L:
+            cubeControl = 'none'
+        elif key == glfw.KEY_U:
+            cubeControl = 'none'
+        elif key == glfw.KEY_O:
+            cubeControl = 'none'
 
 # MuJoCo data structures
 model = mj.MjModel.from_xml_path(modelPath)  # MuJoCo model
@@ -98,6 +125,10 @@ FRR = mj.mj_name2id(model, mj.mjtObj.mjOBJ_ACTUATOR, 'FR-R-servo')
 FLR = mj.mj_name2id(model, mj.mjtObj.mjOBJ_ACTUATOR, 'FL-R-servo')
 BRR = mj.mj_name2id(model, mj.mjtObj.mjOBJ_ACTUATOR, 'BR-R-servo')
 BLR = mj.mj_name2id(model, mj.mjtObj.mjOBJ_ACTUATOR, 'BL-R-servo')
+cube = mj.mj_name2id(model,mj.mjtObj.mjOBJ_JOINT, 'box-joint') 
+
+cube_qpos_addr = model.jnt_qposadr[cube]  # Get qpos index for the cube joint
+
 
 rclpy.init()
 actuatorPositionNode = ActuatorPositionPub()
@@ -483,43 +514,55 @@ robot_fsm.__init__
 while not glfw.window_should_close(window):
     time_prev = data.time
     direction = 0
-    # print (keyBoardControl)
     while data.time - time_prev < 1.0 / displayRefreshRate:
         # Keyboard Control
-        # if keyBoardControl == 'fwd':
-        #     robot_fsm.step(1)
-        # elif keyBoardControl == 'lft':
-        #     robot_fsm.turn("left")
-        # elif keyBoardControl == 'rgt':
-        #     robot_fsm.turn('right')
-        # elif keyBoardControl == 'bck':
-        #     robot_fsm.step(-1)
-        # elif keyBoardControl == 'nut':
-        #     robot_fsm.neutralPos()
+        if keyBoardControl == 'fwd':
+            robot_fsm.step(1)
+        elif keyBoardControl == 'lft':
+            robot_fsm.turn("left")
+        elif keyBoardControl == 'rgt':
+            robot_fsm.turn('right')
+        elif keyBoardControl == 'bck':
+            robot_fsm.step(-1)
+        elif keyBoardControl == 'nut':
+            robot_fsm.neutralPos()
         
-        # if cameraControl == 'down':
-        #     cam.elevation -= 0.1
-        # elif cameraControl == 'up':
-        #     cam.elevation += 0.1
-        # elif cameraControl == 'right':
-        #     cam.azimuth -= 0.1
-        # elif cameraControl == 'left':
-        #     cam.azimuth += 0.1
-        # elif cameraControl == 'home':
-        #     if cam.azimuth > 45:
-        #         while cam.azimuth > 45:
-        #             cam.azimuth -= 0.1
-        #     if cam.azimuth < 45:
-        #         while cam.azimuth < 45:
-        #             cam.azimuth += 0.1
-        #     if cam.elevation > -35:
-        #         while cam.elevation > -35:
-        #             cam.elevation -= 0.1
-        #     if cam.elevation < -35:
-        #         while cam.elevation < -35:
-        #             cam.elevation += 0.1
+        if cubeControl == 'cube_fwd':
+            data.qpos[cube_qpos_addr] += 0.001 
+        elif cubeControl == 'cube_bck':
+            data.qpos[cube_qpos_addr] -= 0.001
+        elif cubeControl == 'cube_right':
+            data.qpos[cube_qpos_addr + 1] += 0.001
+        elif cubeControl == 'cube_left':
+            data.qpos[cube_qpos_addr + 1] -= 0.001
+        elif cubeControl == 'cube_rot_cw':
+            data.qpos[cube_qpos_addr + 6] += 0.001
+        elif cubeControl == 'cube_rot_ccw':
+            data.qpos[cube_qpos_addr + 6] -= 0.001
+
+        if cameraControl == 'down':
+            cam.elevation -= 0.1
+        elif cameraControl == 'up':
+            cam.elevation += 0.1
+        elif cameraControl == 'right':
+            cam.azimuth -= 0.1
+        elif cameraControl == 'left':
+            cam.azimuth += 0.1
+        elif cameraControl == 'home':
+            if cam.azimuth > 45:
+                while cam.azimuth > 45:
+                    cam.azimuth -= 0.1
+            if cam.azimuth < 45:
+                while cam.azimuth < 45:
+                    cam.azimuth += 0.1
+            if cam.elevation > -35:
+                while cam.elevation > -35:
+                    cam.elevation -= 0.1
+            if cam.elevation < -35:
+                while cam.elevation < -35:
+                    cam.elevation += 0.1
         # # Step the MuJoCo simulation
-        robot_fsm.turn('left')
+        # robot_fsm.turn('left')
         mj.mj_step(model, data)
         glfw.poll_events()
 
