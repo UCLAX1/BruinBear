@@ -11,7 +11,7 @@ print_camera_config = 1 #set to 1 to print camera config
                         #this is useful for initializing view of the model
 
 modelPath = 'ros2_ws/quadruped-new/quadruped_o.xml'
-displayRefreshRate = 240
+displayRefreshRate = 60
 class ActuatorPositionPub(Node):
   def __init__(self):
     super().__init__('actuator_pos_pub')
@@ -23,8 +23,8 @@ class ActuatorPositionPub(Node):
     msg = String()
     msg.data = str(actuator_positions)
     self.publisher_.publish(msg)
-    print("\033c") # disable if this causes problems, just clears the terminal
-    self.get_logger().info('Actuator Positions: "%s"' % msg.data)
+    print("\033c") # disable if this causes problems, just clears the terminal  
+    ('Actuator Positions: "%s"' % msg.data)
 
 keyBoardControl = 'none'
 cubeControl = 'none'
@@ -125,9 +125,14 @@ FRR = mj.mj_name2id(model, mj.mjtObj.mjOBJ_ACTUATOR, 'FR-R-servo')
 FLR = mj.mj_name2id(model, mj.mjtObj.mjOBJ_ACTUATOR, 'FL-R-servo')
 BRR = mj.mj_name2id(model, mj.mjtObj.mjOBJ_ACTUATOR, 'BR-R-servo')
 BLR = mj.mj_name2id(model, mj.mjtObj.mjOBJ_ACTUATOR, 'BL-R-servo')
-cube = mj.mj_name2id(model,mj.mjtObj.mjOBJ_JOINT, 'box-joint') 
 
+cube = mj.mj_name2id(model,mj.mjtObj.mjOBJ_JOINT, 'box-joint')
 cube_qpos_addr = model.jnt_qposadr[cube]  # Get qpos index for the cube joint
+
+com_id = mj.mj_name2id(model, mj.mjtObj.mjOBJ_BODY, 'com-sphere')
+
+
+# com_sphere_addr = model.jnt_gposadr
 
 
 rclpy.init()
@@ -478,22 +483,23 @@ robot_fsm = RobotStateMachine()
 def getCoM():
     total_mass = 0
     com = np.zeros(3)
-    for i in range(model.nbody):
+    for i in range(model.nbody -3):
         mass = model.body_mass[i]
         pos = data.xipos[i]
         com += mass * pos
         total_mass += mass
     com /= total_mass
-    print("Center of Mass:", com)
+    # print("Center of Mass:", com)
     return com
 
 # Add the CoM sphere
-com_body_id = mj.mj_name2id(model, mj.mjtObj.mjOBJ_GEOM, "com_sphere")
+# com_body_id = mj.mj_name2id(model, mj.mjtObj.mjOBJ_GEOM, "com_sphere")
+
 
 
 # Init GLFW, create window, make OpenGL context current, request v-sync
 glfw.init()
-window = glfw.create_window(int(1200), int(900), "Quadruped", None, None)
+window = glfw.create_window(int(1200*0.6), int(900*0.6), "Quadruped", None, None)
 glfw.make_context_current(window)
 # glfw.swap_interval(1)
 
@@ -563,6 +569,8 @@ while not glfw.window_should_close(window):
                     cam.elevation += 0.1
         # # Step the MuJoCo simulation
         # robot_fsm.turn('left')
+
+        data.mocap_pos[0] = getCoM()
         mj.mj_step(model, data)
         glfw.poll_events()
 
