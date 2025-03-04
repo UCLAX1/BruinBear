@@ -12,9 +12,8 @@ from roboticstoolbox import mstraj
 import math
 from controls.inverse_kinematics import solveIK
 import controls.gaits as gaits
+import controls.gait_publisher as publisher
 
-#global gait 
-gait = "rnr"
 
 startPos = [0] * 12
 # startfront = solveIK([0,-0.3,0])
@@ -30,7 +29,13 @@ class JointPosPublisher(Node):
    def __init__(self):
       super().__init__('joint_pos_pub')
       self.publisher_ = self.create_publisher(Float32MultiArray, 'joint_positions', 10)
-      #self.subscription = self.create_subscription(String,'gait_control', self.listener_callback, 10)
+      self.subscription = self.create_subscription(
+         String,
+         'gait_control', 
+         self.listener_callback, 
+         10
+         )
+      self.subscription
       timer_period = 1
       self.timer = self.create_timer(timer_period, self.pub_actuator_pos)
       #self.gait = ""
@@ -39,11 +44,15 @@ class JointPosPublisher(Node):
       msg = Float32MultiArray()
       msg.data = joint_positions
       self.publisher_.publish(msg)
+      #self.get_logger().info(f'received gait: {msg.data}')
    
-   # def listener_callback(self, msg):
-   #    self.get_logger().info('recieved gait')
-   #    #self.gait
-   #    self.gait = msg.data
+   def listener_callback(self, msg):
+      #self.gait
+      #self.gait
+      global gait
+      gait = msg.data
+      self.get_logger().info(f'received gait: {msg.data}')
+
 
 
 
@@ -61,14 +70,16 @@ class JointPosPublisher(Node):
 
 
 startTime = time.time()
-gaitTraj = None
+#gaitTraj = gaits.Walk()
+global prevGait
 prevGait = ""
 cycle = 0
 
 
 
+
 def GeneratePosition():
-   global gait, prevGait, startTime, trajNode, gaitTraj, cycle
+   global gait, startTime, trajNode, gaitTraj, cycle, prevGait
    
    if prevGait != gait:
       prevGait = gait
@@ -114,8 +125,13 @@ def main(args=None):
    rclpy.init()
    global trajNode 
    trajNode = JointPosPublisher()
+   #rclpy.spin(trajNode)
+   #gait_publisher = publisher()
    #trajNode.listener_callback()
    #gait = trajNode.gait
+   global gait
+   gait = "f"
+   #print(gait)
 
 
    walking = True
@@ -127,7 +143,9 @@ def main(args=None):
    #wait for the model to drop in the sim
 
    while walking:
+      #rclpy.spin_once(trajNode, timeout_sec=0)
       trajNode.pub_actuator_pos(GeneratePosition())
+   #rclpy.shutdown()
 
 if __name__ == '__main__':
     main()
