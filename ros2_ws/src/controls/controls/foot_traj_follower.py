@@ -37,7 +37,7 @@ class JointPosPublisher(Node):
          )
       self.subscription
       timer_period = 1
-      self.timer = self.create_timer(timer_period, self.pub_actuator_pos)
+      # self.timer = self.create_timer(timer_period, self.pub_actuator_pos)
       #self.gait = ""
   
    def pub_actuator_pos(self, joint_positions):
@@ -143,7 +143,7 @@ def main(args=None):
    #wait for the model to drop in the sim
 
    while walking:
-      #rclpy.spin_once(trajNode, timeout_sec=0)
+      rclpy.spin_once(trajNode, timeout_sec=0)
       trajNode.pub_actuator_pos(GeneratePosition())
    #rclpy.shutdown()
 

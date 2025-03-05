@@ -27,7 +27,7 @@ def main(args=None):
     global gaitNode
     gaitNode = gaitPublisher()
     gait_origin = ""
-    gait = "r"
+    gait = "rnr"
     while True:
         if (gait_origin != gait):
             gaitNode.pub_gait(gait)
