@@ -12,5 +12,10 @@ def generate_launch_description():
             package='controls',
             executable='traj',
             name='traj'
+        ),
+        Node(
+            package='controls',
+            executable='fsm',
+            name='fsm'
         )
     ])
