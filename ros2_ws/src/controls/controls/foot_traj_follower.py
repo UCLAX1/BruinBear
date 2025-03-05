@@ -14,7 +14,7 @@ from controls.inverse_kinematics import solveIK
 import controls.gaits as gaits
 
 #global gait 
-gait = "rnr"
+gait = "t"
 
 startPos = [0] * 12
 # startfront = solveIK([0,-0.3,0])
@@ -89,7 +89,10 @@ def GeneratePosition():
             gaitTraj = gaits.TurnInPlaceNoRoll(turnRight=True, logger=trajNode.get_logger())
          case "leftInPlaceNoRoll"|"lnr":
             gaitTraj = gaits.TurnInPlaceNoRoll(turnRight=False, logger=trajNode.get_logger())
-         
+         case "leftInPlaceWithRoll"|"lwr":
+            gaitTraj = gaits.TurnInPlaceWithRoll(turnRight=False, logger=trajNode.get_logger())
+         case "rightInPlaceWithRoll"|"rwr":
+            gaitTraj = gaits.TurnInPlaceWithRoll(turnRight=True, logger=trajNode.get_logger())
 
    curTime = time.time() - startTime
    pos = gaitTraj.getPos(curTime)
