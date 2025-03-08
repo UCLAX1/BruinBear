@@ -89,7 +89,10 @@ def GeneratePosition():
             gaitTraj = gaits.TurnInPlaceNoRoll(turnRight=False, logger=trajNode.get_logger())
          case "standing" | "s":
             gaitTraj = gaits.Stand(trajNode.get_logger())
-         
+         case "leftInPlaceWithRoll"|"lwr":
+            gaitTraj = gaits.TurnInPlaceWithRoll(turnRight=False, logger=trajNode.get_logger())
+         case "rightInPlaceWithRoll"|"rwr":
+            gaitTraj = gaits.TurnInPlaceWithRoll(turnRight=True, logger=trajNode.get_logger())
 
    curTime = time.time() - startTime
    pos = gaitTraj.getPos(curTime)
