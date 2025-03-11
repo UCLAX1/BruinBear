@@ -28,7 +28,8 @@ setup(
     entry_points={
         'console_scripts': [
             'traj = controls.foot_traj_follower:main',
-            'sim = controls.sim:main'
+            'sim = controls.sim:main',
+            'fsm = controls.gait_publisher:main'
         ],
     },
 )
