@@ -8,3 +8,5 @@ build/
 MUJOCO_LOG.TXT
 .vscode/
 venv/
+vendordeps/REVLib.json
+vendordeps/WPILibNewCommands.json
