@@ -73,8 +73,8 @@ class RealSenseNode(Node):
     def blur_depth_image(self, depth_image, h, w):
         #kernel = np.ones((25,25),np.float32)/(25**2)
         ratio = 100
-        kernel_width = w/ratio
-        kernel_height = h/ratio
+        kernel_width = w//ratio
+        kernel_height = h//ratio
         kernel = np.ones((kernel_width, kernel_height), np.float32)/(kernel_width * kernel_height)
         blurred_image = cv2.filter2D(depth_image,-1,kernel)
         cv2.imwrite('convolved image.png', dst)
