@@ -11,6 +11,7 @@ Current_Set = 0x20510C0
 Smart_Motion_Set = 0x2051480
 Position_Set = 0x2050C80
 Heartbeat_Set = 0x2052C80
+Device_Specific_Heartbeat = 0x2052480
 
 CAN_EFF_FLAG = 0x80000000
 
@@ -18,7 +19,7 @@ CAN_EFF_FLAG = 0x80000000
 # enum status_frame_id {
 status_0 = 0x2051800
 status_1 = 0x2051840
-status_2 = 0x2051880
+status_2 = 0x205B880
 status_3 = 0x20518C0
 status_4 = 0x2051900
 
@@ -98,11 +99,11 @@ def send_heartbeat(device_id):
     
 def send_device_specific_heartbeat(device_id):
     """Sends the special 'internal heartbeat' frame that makes the motor actually move"""
-    internal_heartbeat_id = (0x2052480 + device_id) | 0x80000000
+    internal_heartbeat_id = (Device_Specific_Heartbeat + device_id) | 0x80000000
     data = [0xFF] * 8
     msg = can.Message(arbitration_id=internal_heartbeat_id, is_extended_id=True, data=data)
     bus.send(msg)
-    print(f"Sent internal heartbeat to device {device_id} (ID: {hex(internal_heartbeat_id)})")
+    # print(f"Sent internal heartbeat to device {device_id} (ID: {hex(internal_heartbeat_id)})")
     
     
 def send_duty_cycle(device_id, percent_output):
@@ -112,7 +113,7 @@ def send_duty_cycle(device_id, percent_output):
     data[:4] = duty_data
     msg = can.Message(arbitration_id=ext_id, is_extended_id=True, data=data)
     bus.send(msg)
-    print(f"Sent Duty Cycle command: {percent_output * 100:.1f}%")
+    # print(f"Sent Duty Cycle command: {percent_output * 100:.1f}%")
     
     
 def send_position_set(device_id, position_rotations):
@@ -140,7 +141,7 @@ def send_position_set(device_id, position_rotations):
 
 def get_encoder_position(device_id, timeout=1.0):
     """Waits for a status 2 frame and extracts encoder position (in rotations)"""
-    status_2_id = (0x2051880 + device_id)
+    status_2_id = (0x205B880 + device_id)
 
     # Listen for messages on the bus
     print(f"Waiting for position frame from device {device_id}...")
@@ -183,9 +184,10 @@ def read_can_once():
     """
     msg = bus.recv(timeout=0.001)  # Small timeout so it doesn’t block
     if msg is not None:
-        print(f"CAN Received | ID: {hex(msg.arbitration_id)}  "
-              f"{'EXT' if msg.is_extended_id else 'STD'}  "
-              f"DL: {msg.dlc}  Data: {' '.join(f'{b:02X}' for b in msg.data)}")
+        if msg.arbitration_id & 0xFFFF == 0xb841 :
+            print(f"CAN Received | ID: {hex(msg.arbitration_id)}  "
+                f"{'EXT' if msg.is_extended_id else 'STD'}  "
+                f"DL: {msg.dlc}  Data: {' '.join(f'{b:02X}' for b in msg.data)}")
 
 
 # Example Usage: Set motor with device ID 11 to 500 RPM
@@ -195,16 +197,21 @@ def read_can_once():
 time.sleep(2)
 send_position_set(1, 1.0)
 set_status_frame_period(1, status_2, 20)
-set_status_frame_period(1, status_3, 20)
-set_status_frame_period(1, status_4, 20)
+# set_status_frame_period(1, status_4, 20)
 
+
+setFrame = False
 
 while True:
     # send_speed_set(1, 1000.0)
-    # send_duty_cycle(1, 0.3) 
+    send_duty_cycle(1, 0.1) 
     # send_position_set(1, 1.0) 
     read_can_once()
+    # send_position_set(1, 1.0)
     send_device_specific_heartbeat(1)
+    
+    # set_status_frame_period(1, status_2, 20)
+
     time.sleep(0.02)  # Send every second
     
 # 
