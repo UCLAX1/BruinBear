@@ -136,7 +136,7 @@ def get_position_of_obstacle(depth_image):
             cell_average = np.mean(cell)
             blurred_depth_image_averages[i, j] = cell_average
 
-    max_value_position = np.argmax(blurred_depth_image_averages)
+    max_value_position = np.argmin(blurred_depth_image_averages)
     #unravaled_max_value_position = np.unravel_index(max_value_position, np.array(grid_size).shape)
     unraveled_x_position = max_value_position // grid_size[0]
     unraveled_y_position = max_value_position % grid_size[1]
