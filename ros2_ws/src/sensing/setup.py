@@ -22,6 +22,7 @@ setup(
         'console_scripts': [
             'hands = sensing.handTracking:main',
             'depth = sensing.realsense:main',
+            'testing = sensing.realsensetest:main',
         ],
     },
 )
