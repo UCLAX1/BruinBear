@@ -7,7 +7,7 @@ import cv2
 from rclpy.executors import MultiThreadedExecutor
 
 class DepthListenerNode(Node):
-    def __init__(self):
+    def __init__(self):                                               
         super().__init__('depth_listener_node')
         # Create a subscriber for the depth topic
         self.subscription = self.create_subscription(
@@ -67,7 +67,8 @@ def main(args=None):
         pass
     finally:
         # Shutdown the node gracefully on exit
-        node.shutdown()
+        rclpy.shutdown()
+        pass
 
 
 if __name__ == '__main__':
