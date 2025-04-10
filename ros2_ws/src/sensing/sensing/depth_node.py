@@ -39,21 +39,21 @@ class DepthListenerNode(Node):
         cv2.imshow("Depth Image", depth_image_normalized)
         cv2.waitKey(1)
 
-    def get_center_point(self, depth_image):
-        grid_size = [16, 16]
-        h, w = depth_image.shape
-        cell_h, cell_w = h // grid_size[0], w // grid_size[1]
-        # Iterate through grid cells
-        depth_averages = np.zeros(grid_size)
-        for i in range(grid_size[0]):
-            for j in range(grid_size[1]):
-                cell = depth_image[i * cell_h:(i + 1) * cell_h, j * cell_w:(j + 1) * cell_w]
-                avg_depth = np.mean(cell)
-                depth_averages[i, j] = avg_depth  # Store in the array
+    # def get_center_point(self, depth_image):
+    #     grid_size = [16, 16]
+    #     h, w = depth_image.shape
+    #     cell_h, cell_w = h // grid_size[0], w // grid_size[1]
+    #     # Iterate through grid cells
+    #     depth_averages = np.zeros(grid_size)
+    #     for i in range(grid_size[0]):
+    #         for j in range(grid_size[1]):
+    #             cell = depth_image[i * cell_h:(i + 1) * cell_h, j * cell_w:(j + 1) * cell_w]
+    #             avg_depth = np.mean(cell)
+    #             depth_averages[i, j] = avg_depth  # Store in the array
 
-        center_point_depth = depth_image[depth_image.shape[0] // 2, depth_image.shape[1] // 2]
-        print(center_point_depth)
-        return center_point_depth
+    #     center_point_depth = depth_image[depth_image.shape[0] // 2, depth_image.shape[1] // 2]
+    #     print(center_point_depth)
+    #     return center_point_depth
 
 def main(args=None):
     rclpy.init(args=args)
