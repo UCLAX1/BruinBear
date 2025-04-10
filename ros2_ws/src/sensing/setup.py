@@ -21,8 +21,9 @@ setup(
     entry_points={
         'console_scripts': [
             'hands = sensing.handTracking:main',
-            'depth = sensing.realsense:main',
-            'testing = sensing.realsensetest:main',
+            'depth = sensing.depth_node:main',
+            'depth_processing = sensing.realsense:main',
+
         ],
     },
 )
