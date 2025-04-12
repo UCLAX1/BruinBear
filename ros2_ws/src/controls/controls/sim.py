@@ -10,7 +10,7 @@ from controls.foot_traj_follower import startPos
 
 # xml_path = 'hello.xml' #xml file (assumes this is in the same folder as this file)
 simend = 10 #simulation time
-print_camera_config = 0 #set to 1 to print camera config
+print_camera_config = 1 #set to 1 to print camera config
                         #this is useful for initializing view of the model
 
 # For callback functions
@@ -20,7 +20,7 @@ button_right = False
 lastx = 0
 lasty = 0
 
-modelPath = 'quadruped-new/quadruped.xml'
+modelPath = 'quadruped-new/quadruped_o.xml'
 displayRefreshRate = 120
 joints = startPos
 
@@ -34,11 +34,190 @@ class jointPosSub(Node):
             self.listener_callback,
             10)
         self.subscription  # prevent unused variable warning
+        self.publisher_ = self.create_publisher(Float32MultiArray, 'rangefinder_data', 10)
 
     def listener_callback(self, msg):
         # self.get_logger().info('recieved positions')
         global joints 
         joints = msg.data
+
+    def pub_rangefinder_data(self):
+        msg = Float32MultiArray()
+        if(getRange('range1') < 2000):
+            msg.data.append(getRange('range2'))
+        else:
+            msg.data.append(-1)
+        if(getRange('range2') < 2000):
+            msg.data.append(getRange('range1'))
+        else:
+            msg.data.append(-1)
+        if(getRange('range3') < 2000):
+            msg.data.append(getRange('range3'))
+        else:
+            msg.data.append(-1)
+        self.publisher_.publish(msg)
+        self.get_logger().info("publishing: " + str(msg)) 
+
+    
+
+#Rangefinder publisher
+class RangefinderPub(Node):
+  def __init__(self):
+    super().__init__('rangefinder_pub')
+    self.publisher_ = self.create_publisher(Float32MultiArray, 'rangefinder_data', 10)
+    timer_period = 0.5
+    # self.timer = self.create_timer(timer_period, self.pub_rangefinder_data)
+
+
+  def pub_rangefinder_data(self):
+    msg = Float32MultiArray()
+    if(getRange('range1') < 2000):
+        msg.data.append(getRange('range2'))
+    else:
+        msg.data.append(-1)
+    if(getRange('range2') < 2000):
+        msg.data.append(getRange('range1'))
+    else:
+        msg.data.append(-1)
+    if(getRange('range3') < 2000):
+        msg.data.append(getRange('range3'))
+    else:
+        msg.data.append(-1)
+    # self.publisher_.publish(msg)
+    # self.get_logger().info("publishing: " + str(msg)) 
+    # print("\033c") # disable if this causes problems, just clears the terminal  
+    # ('Rangefinder Data: "%s"' % msg.data)
+
+
+keyBoardControl = 'none'
+cubeControl1 = 'none'
+cubeControl2 = 'none'
+cubeControl3 = 'none'
+cameraControl = 'none'
+def keyboard_callback(window, key, scancode, action, mods):
+    global keyBoardControl, cameraControl, cubeControl1, cubeControl2, cubeControl3
+    if action == glfw.PRESS or action == glfw.REPEAT:  # Handle key press or hold
+        if key == glfw.KEY_W:  # Move forward)
+            keyBoardControl = 'fwd'
+        elif key == glfw.KEY_A:  # Turn left
+            keyBoardControl = 'lft'
+        elif key == glfw.KEY_D:  # Turn right
+            keyBoardControl = 'rgt'
+        elif key == glfw.KEY_S:
+            keyBoardControl = 'bck'
+        elif key == glfw.KEY_X:  # Neutral position or stop
+            keyBoardControl = 'nut'
+        elif key == glfw.KEY_UP:
+            cameraControl = 'up'
+        elif key == glfw.KEY_DOWN:
+            cameraControl = 'down'
+        elif key == glfw.KEY_RIGHT:
+            cameraControl = 'right'
+        elif key == glfw.KEY_LEFT:
+            cameraControl = 'left'
+        elif key == glfw.KEY_DELETE:
+            cameraControl = 'home'
+
+        if key == glfw.KEY_G:
+            cubeControl1 = 'cube_fwd'
+        elif key == glfw.KEY_V:
+            cubeControl1 = 'cube_bck'
+        elif key == glfw.KEY_C:
+            cubeControl1 = 'cube_left'
+        elif key == glfw.KEY_B:
+            cubeControl1 = 'cube_right'
+        elif key == glfw.KEY_N:
+            cubeControl1 = 'cube_rot_ccw'
+        elif key == glfw.KEY_M:
+            cubeControl1 = 'cube_rot_cw'
+
+        if key == glfw.KEY_I:
+            cubeControl2 = 'cube_fwd'
+        elif key == glfw.KEY_K:
+            cubeControl2 = 'cube_bck'
+        elif key == glfw.KEY_L:
+            cubeControl2 = 'cube_left'
+        elif key == glfw.KEY_J:
+            cubeControl2 = 'cube_right'
+        elif key == glfw.KEY_U:
+            cubeControl2 = 'cube_rot_ccw'
+        elif key == glfw.KEY_O:
+            cubeControl2 = 'cube_rot_cw'
+
+        if key == glfw.KEY_SEMICOLON:
+            cubeControl3 = 'cube_fwd'
+        elif key == glfw.KEY_PERIOD:
+            cubeControl3 = 'cube_bck'
+        elif key == glfw.KEY_COMMA:
+            cubeControl3 = 'cube_left'
+        elif key == glfw.KEY_SLASH:
+            cubeControl3 = 'cube_right'
+        elif key == glfw.KEY_Q:
+            cubeControl3 = 'cube_rot_ccw'
+        elif key == glfw.KEY_P:
+            cubeControl3 = 'cube_rot_cw'
+        
+    elif action == glfw.RELEASE:
+        if key == glfw.KEY_W:  # Move forward
+            keyBoardControl = 'nut'
+        elif key == glfw.KEY_A:  # Turn left
+            keyBoardControl = 'nut'
+        elif key == glfw.KEY_D:  # Turn right
+            keyBoardControl = 'nut'
+        elif key == glfw.KEY_S:
+            keyBoardControl = 'nut'
+        elif key == glfw.KEY_X:  # Neutral position or stop
+            keyBoardControl = 'nut'
+        
+        if key == glfw.KEY_UP:
+            cameraControl = 'none'
+        elif key == glfw.KEY_DOWN:
+            cameraControl = 'none'
+        elif key == glfw.KEY_RIGHT:
+            cameraControl = 'none'
+        elif key == glfw.KEY_LEFT:
+            cameraControl = 'none'
+        elif key == glfw.KEY_DELETE:
+            cameraControl = 'none'
+
+        if key == glfw.KEY_G:
+            cubeControl1 = 'none'
+        elif key == glfw.KEY_V:
+            cubeControl1 = 'none'
+        elif key == glfw.KEY_C:
+            cubeControl1 = 'none'
+        elif key == glfw.KEY_B:
+            cubeControl1 = 'none'
+        elif key == glfw.KEY_N:
+            cubeControl1 = 'none'
+        elif key == glfw.KEY_M:
+            cubeControl1 = 'none'
+        
+        if key == glfw.KEY_I:
+            cubeControl2 = 'none'
+        elif key == glfw.KEY_K:
+            cubeControl2 = 'none'
+        elif key == glfw.KEY_J:
+            cubeControl2 = 'none'
+        elif key == glfw.KEY_L:
+            cubeControl2 = 'none'
+        elif key == glfw.KEY_U:
+            cubeControl2 = 'none'
+        elif key == glfw.KEY_O:
+            cubeControl2 = 'none'
+
+        if key == glfw.KEY_SEMICOLON:
+            cubeControl3 = 'none'
+        elif key == glfw.KEY_PERIOD:
+            cubeControl3 = 'none'
+        elif key == glfw.KEY_COMMA:
+            cubeControl3 = 'none'
+        elif key == glfw.KEY_SLASH:
+            cubeControl3 = 'none'
+        elif key == glfw.KEY_Q:
+            cubeControl3 = 'none'
+        elif key == glfw.KEY_P:
+            cubeControl3 = 'none'
 
 
 def init_controller(model,data):
@@ -130,6 +309,28 @@ data = mj.MjData(model)                     # MuJoCo data
 cam = mj.MjvCamera()                        # Abstract camera
 opt = mj.MjvOption()                        # visualization options
 
+cube1 = mj.mj_name2id(model,mj.mjtObj.mjOBJ_JOINT, 'box-joint1')
+cube_qpos_addr1 = model.jnt_qposadr[cube1]  # Get qpos index for the cube joint
+
+cube2 = mj.mj_name2id(model,mj.mjtObj.mjOBJ_JOINT, 'box-joint2')
+cube_qpos_addr2 = model.jnt_qposadr[cube2]  # Get qpos index for the cube joint
+
+cube3 = mj.mj_name2id(model,mj.mjtObj.mjOBJ_JOINT, 'box-joint3')
+cube_qpos_addr3 = model.jnt_qposadr[cube3]  # Get qpos index for the cube joint
+
+com_id = mj.mj_name2id(model, mj.mjtObj.mjOBJ_BODY, 'com-sphere')
+
+def getRange(rangefinder_name):
+    # mujoco.mj_resetData(model, data)
+    # data.ctrl = 20
+    return data.sensor(rangefinder_name).data.copy()
+
+rclpy.init()
+counter = 0
+globalRobotState = 'start'
+startedWalking = False
+motorSpeed = 0.001
+
 def main(args=None):
     # Init GLFW, create window, make OpenGL context current, request v-sync
     glfw.init()
@@ -144,7 +345,7 @@ def main(args=None):
     context = mj.MjrContext(model, mj.mjtFontScale.mjFONTSCALE_150.value)
 
     # install GLFW mouse and keyboard callbacks
-    glfw.set_key_callback(window, keyboard)
+    glfw.set_key_callback(window, keyboard_callback)
     glfw.set_cursor_pos_callback(window, mouse_move)
     glfw.set_mouse_button_callback(window, mouse_button)
     glfw.set_scroll_callback(window, scroll)
@@ -169,15 +370,21 @@ def main(args=None):
     BRR = mj.mj_name2id(model, mj.mjtObj.mjOBJ_ACTUATOR, 'BR-R-servo')
     BLR = mj.mj_name2id(model, mj.mjtObj.mjOBJ_ACTUATOR, 'BL-R-servo')
 
-    rclpy.init()
+    #rclpy.init()
     simNode = jointPosSub()
     counter = 0
     global joints
+
+    cam.distance = 2  # Adjust this distance as needed
+    cam.azimuth = 45   # Keep or modify this for different angles
+    cam.elevation = -35 # Adjust the elevation if necessary
+    # Update scene and render
 
     while not glfw.window_should_close(window):
         time_prev = data.time
         while data.time - time_prev < 1.0/displayRefreshRate:
             rclpy.spin_once(simNode, timeout_sec=0)
+            simNode.pub_rangefinder_data()
             data.ctrl[FLH] = joints[0]
             data.ctrl[FRH] = joints[1]
             data.ctrl[BRH] = joints[2]
@@ -191,6 +398,67 @@ def main(args=None):
             data.ctrl[BRR] = joints[10]
             data.ctrl[BLR] = joints[11]
             
+            if cubeControl1 == 'cube_fwd':
+                data.qpos[cube_qpos_addr1] += 0.001 
+            elif cubeControl1 == 'cube_bck':
+                data.qpos[cube_qpos_addr1] -= 0.001
+            elif cubeControl1 == 'cube_right':
+                data.qpos[cube_qpos_addr1 + 1] += 0.001
+            elif cubeControl1 == 'cube_left':
+                data.qpos[cube_qpos_addr1 + 1] -= 0.001
+            elif cubeControl1 == 'cube_rot_cw':
+                data.qpos[cube_qpos_addr1 + 6] += 0.001
+            elif cubeControl1 == 'cube_rot_ccw':
+                data.qpos[cube_qpos_addr1 + 6] -= 0.001
+            
+            if cubeControl2 == 'cube_fwd':
+                data.qpos[cube_qpos_addr2] += 0.001 
+            elif cubeControl2 == 'cube_bck':
+                data.qpos[cube_qpos_addr2] -= 0.001
+            elif cubeControl2 == 'cube_right':
+                data.qpos[cube_qpos_addr2 + 1] += 0.001
+            elif cubeControl2 == 'cube_left':
+                data.qpos[cube_qpos_addr2 + 1] -= 0.001
+            elif cubeControl2 == 'cube_rot_cw':
+                data.qpos[cube_qpos_addr2 + 6] += 0.001
+            elif cubeControl2 == 'cube_rot_ccw':
+                data.qpos[cube_qpos_addr2 + 6] -= 0.001
+
+            if cubeControl3 == 'cube_fwd':
+                data.qpos[cube_qpos_addr3] += 0.001 
+            elif cubeControl3 == 'cube_bck':
+                data.qpos[cube_qpos_addr3] -= 0.001
+            elif cubeControl3 == 'cube_right':
+                data.qpos[cube_qpos_addr3 + 1] += 0.001
+            elif cubeControl3 == 'cube_left':
+                data.qpos[cube_qpos_addr3 + 1] -= 0.001
+            elif cubeControl3 == 'cube_rot_cw':
+                data.qpos[cube_qpos_addr3 + 6] += 0.001
+            elif cubeControl3 == 'cube_rot_ccw':
+                data.qpos[cube_qpos_addr3 + 6] -= 0.001
+
+            if cameraControl == 'down':
+                cam.elevation -= 0.1
+            elif cameraControl == 'up':
+                cam.elevation += 0.1
+            elif cameraControl == 'right':
+                cam.azimuth -= 0.1
+            elif cameraControl == 'left':
+                cam.azimuth += 0.1
+            elif cameraControl == 'home':
+                if cam.azimuth > 45:
+                    while cam.azimuth > 45:
+                        cam.azimuth -= 0.1
+                if cam.azimuth < 45:
+                    while cam.azimuth < 45:
+                        cam.azimuth += 0.1
+                if cam.elevation > -35:
+                    while cam.elevation > -35:
+                        cam.elevation -= 0.1
+                if cam.elevation < -35:
+                    while cam.elevation < -35:
+                        cam.elevation += 0.1
+            
 
             mj.mj_step(model, data)
 
@@ -203,10 +471,6 @@ def main(args=None):
         robot_y = data.xpos[1][1]  # Y-coordinate of the robot 
         cam.lookat = [robot_x, robot_y, 0.2]
 
-        cam.distance = 2  # Adjust this distance as needed
-        cam.azimuth = 45   # Keep or modify this for different angles
-        cam.elevation = -35 # Adjust the elevation if necessary
-        # Update scene and render
         mj.mjv_updateScene(model, data, opt, None, cam,
                         mj.mjtCatBit.mjCAT_ALL.value, scene)
         mj.mjr_render(viewport, scene, context)
