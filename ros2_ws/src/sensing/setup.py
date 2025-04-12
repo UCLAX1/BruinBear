@@ -20,6 +20,11 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+            'hands = sensing.handTracking:main',
+            'depth = sensing.depth_node:main',
+            'depth_processing = sensing.depth_processing:main',
+            'face = sensing.faceTracking:main',
+
         ],
     },
 )
