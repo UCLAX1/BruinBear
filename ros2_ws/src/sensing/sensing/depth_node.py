@@ -4,6 +4,7 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 import numpy as np
 import cv2
+from geometry_msgs.msg import Vector3
 
 class DepthListenerNode(Node):
     def __init__(self):                                               
@@ -16,7 +17,7 @@ class DepthListenerNode(Node):
             10)                  # QoS settings (10 means at least 10 messages are buffered)
         # self.test()
 
-        self.subscription  # Prevent unused variable warning
+        #self.subscription  # Prevent unused variable warning
 
         # Create a CvBridge to convert ROS Image messages to OpenCV format
         self.bridge = CvBridge()
@@ -64,14 +65,12 @@ class DepthListenerNode(Node):
         kernel_height = h//ratio
         kernel = np.ones((kernel_width, kernel_height), np.float32)/(kernel_width * kernel_height)
         blurred_image = cv2.filter2D(depth_image,-1,kernel)
-        #cv2.imwrite('convolved image.png', blurred_image)
         cv2.imwrite('convolved_image.png', blurred_image)
         return blurred_image
 
-
-    def get_position_of_obstacle(self,depth_image):
+    def get_position_distance_of_obstacle(self,depth_image, grid_size):
         #algorithm to check for nearest obstacle
-        grid_size = [16, 16] #row size, col size
+        #grid_size = [16, 16] #row size, col size
         h, w, c = depth_image.shape
         blurred_depth_image = self.blur_depth_image(depth_image, h, w)
         cell_h, cell_w = h // grid_size[0], w // grid_size[1]
@@ -83,15 +82,31 @@ class DepthListenerNode(Node):
                 cell_average = np.mean(cell)
                 blurred_depth_image_averages[i, j] = cell_average
 
-        max_value_position = np.argmin(blurred_depth_image_averages)
+        min_value_position = np.argmin(blurred_depth_image_averages)
+        min_value_distance = np.min(blurred_depth_image_averages)
         #unravaled_max_value_position = np.unravel_index(max_value_position, np.array(grid_size).shape)
-        unraveled_x_position = max_value_position // grid_size[0]
-        unraveled_y_position = max_value_position % grid_size[1]
-        unraveled_max_value_position = np.array([unraveled_x_position, unraveled_y_position])
-        print(unraveled_max_value_position.shape)
-        return unraveled_max_value_position
+        unraveled_x_position = min_value_position // grid_size[0]
+        unraveled_y_position = min_value_position % grid_size[1]
+        unraveled_min_value_position = np.array([unraveled_x_position, unraveled_y_position])
+        print(unraveled_min_value_position.shape)
+        return unraveled_min_value_position, min_value_distance
 
-    def read_in_image(file_path):
+    def get_direction_distance(self, depth_image, grid_size=[12, 12], distance_threshold=0.5):
+        position, distance = self.get_position_distance_of_obstacle(depth_image, grid_size)
+        lmr_position = position[0] // (grid_size[0]/3)
+        output_value = [-1, -1, -1]
+        output_msg = Vector3()
+        if(distance < distance_threshold):
+            output_value[lmr_position] = distance
+        output_msg.x = output_value[0]
+        output_msg.y = output_value[1]
+        output_msg.z = output_value[2]
+        return output_msg #returns ros Vector3 message for publisher
+
+    def read_continuous_frames(self):
+        while 
+
+    def read_in_image(self, file_path):
         #mg = cv2.imread('/Users/sara/Pictures/10-10-6k.jpg')
         #assert img is not None, "file could not be read, check with os.path.exists()"
         img = cv2.imread(file_path)

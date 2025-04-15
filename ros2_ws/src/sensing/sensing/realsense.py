@@ -6,6 +6,7 @@ import numpy as np
 import cv2
 from cv_bridge import CvBridge
 from matplotlib import pyplot as plt
+from geometry_msgs.msg import Twist
 
 class RealSenseNode(Node):
     def __init__(self):
@@ -136,13 +137,21 @@ def get_position_of_obstacle(depth_image):
             cell_average = np.mean(cell)
             blurred_depth_image_averages[i, j] = cell_average
 
-    max_value_position = np.argmin(blurred_depth_image_averages)
+    min_value_position = np.argmin(blurred_depth_image_averages)
+    min_value = np.min(blurred_depth_image_averages)
     #unravaled_max_value_position = np.unravel_index(max_value_position, np.array(grid_size).shape)
-    unraveled_x_position = max_value_position // grid_size[0]
-    unraveled_y_position = max_value_position % grid_size[1]
+    unraveled_x_position = min_value_position // grid_size[0]
+    unraveled_y_position = min_value_position % grid_size[1]
     unraveled_max_value_position = np.array([unraveled_x_position, unraveled_y_position])
     print(unraveled_max_value_position.shape)
     return unraveled_max_value_position
+
+def determine_movement(min_value_distance, min_value_position):
+    threshold_distance = 1
+    if(min_value_distance < threshold_distance):
+        twist_msg = Twist()
+    self.publisher.publish(twist_msg)
+        return 
 
 def read_in_image(file_path):
     #mg = cv2.imread('/Users/sara/Pictures/10-10-6k.jpg')
