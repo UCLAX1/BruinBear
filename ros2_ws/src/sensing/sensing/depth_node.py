@@ -4,7 +4,6 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 import numpy as np
 import cv2
-from rclpy.executors import MultiThreadedExecutor
 
 class DepthListenerNode(Node):
     def __init__(self):                                               
@@ -15,16 +14,19 @@ class DepthListenerNode(Node):
             '/camera/camera/depth/image_rect_raw',  # Topic name (match this to your topic)
             self.depth_image_callback, # Callback function when a message is received
             10)                  # QoS settings (10 means at least 10 messages are buffered)
+        # self.test()
+
         self.subscription  # Prevent unused variable warning
 
         # Create a CvBridge to convert ROS Image messages to OpenCV format
         self.bridge = CvBridge()
 
+
     def depth_image_callback(self, msg):
         try:
             # Convert ROS Image message to OpenCV image
             depth_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='passthrough')
-            self.get_center_point(depth_image)            
+            # self.get_center_point(depth_image)            
             # Display depth image
             self.display_depth_image(depth_image)
         except Exception as e:
@@ -39,21 +41,71 @@ class DepthListenerNode(Node):
         cv2.imshow("Depth Image", depth_image_normalized)
         cv2.waitKey(1)
 
-    # def get_center_point(self, depth_image):
-    #     grid_size = [16, 16]
-    #     h, w = depth_image.shape
-    #     cell_h, cell_w = h // grid_size[0], w // grid_size[1]
-    #     # Iterate through grid cells
-    #     depth_averages = np.zeros(grid_size)
-    #     for i in range(grid_size[0]):
-    #         for j in range(grid_size[1]):
-    #             cell = depth_image[i * cell_h:(i + 1) * cell_h, j * cell_w:(j + 1) * cell_w]
-    #             avg_depth = np.mean(cell)
-    #             depth_averages[i, j] = avg_depth  # Store in the array
+    def get_center_point(self, depth_image):
+        grid_size = [16, 16]
+        h, w = depth_image.shape
+        cell_h, cell_w = h // grid_size[0], w // grid_size[1]
+        # Iterate through grid cells
+        depth_averages = np.zeros(grid_size)
+        for i in range(grid_size[0]):
+            for j in range(grid_size[1]):
+                cell = depth_image[i * cell_h:(i + 1) * cell_h, j * cell_w:(j + 1) * cell_w]
+                avg_depth = np.mean(cell)
+                depth_averages[i, j] = avg_depth  # Store in the array
 
-    #     center_point_depth = depth_image[depth_image.shape[0] // 2, depth_image.shape[1] // 2]
-    #     print(center_point_depth)
-    #     return center_point_depth
+        center_point_depth = depth_image[depth_image.shape[0] // 2, depth_image.shape[1] // 2]
+        print(center_point_depth)
+        return center_point_depth
+
+    def blur_depth_image(self,depth_image, h, w):
+        #kernel = np.ones((25,25),np.float32)/(25**2)
+        ratio = 100
+        kernel_width = w//ratio
+        kernel_height = h//ratio
+        kernel = np.ones((kernel_width, kernel_height), np.float32)/(kernel_width * kernel_height)
+        blurred_image = cv2.filter2D(depth_image,-1,kernel)
+        #cv2.imwrite('convolved image.png', blurred_image)
+        cv2.imwrite('convolved_image.png', blurred_image)
+        return blurred_image
+
+
+    def get_position_of_obstacle(self,depth_image):
+        #algorithm to check for nearest obstacle
+        grid_size = [16, 16] #row size, col size
+        h, w, c = depth_image.shape
+        blurred_depth_image = self.blur_depth_image(depth_image, h, w)
+        cell_h, cell_w = h // grid_size[0], w // grid_size[1]
+        blurred_depth_image_averages = np.zeros(grid_size)
+
+        for i in range(grid_size[0]):
+            for j in range(grid_size[1]):
+                cell = blurred_depth_image[(i) * cell_h: (i + 1) * cell_h, (j) * cell_w: (j + 1) * cell_w]
+                cell_average = np.mean(cell)
+                blurred_depth_image_averages[i, j] = cell_average
+
+        max_value_position = np.argmin(blurred_depth_image_averages)
+        #unravaled_max_value_position = np.unravel_index(max_value_position, np.array(grid_size).shape)
+        unraveled_x_position = max_value_position // grid_size[0]
+        unraveled_y_position = max_value_position % grid_size[1]
+        unraveled_max_value_position = np.array([unraveled_x_position, unraveled_y_position])
+        print(unraveled_max_value_position.shape)
+        return unraveled_max_value_position
+
+    def read_in_image(file_path):
+        #mg = cv2.imread('/Users/sara/Pictures/10-10-6k.jpg')
+        #assert img is not None, "file could not be read, check with os.path.exists()"
+        img = cv2.imread(file_path)
+        assert img is not None
+        print(img.shape)
+        return img
+
+    def test(self):
+        # file_path = "/home/robert27/x1robot/BruinBear/image_convolution/realsense_depth_image_Depth.png"
+        # image = self.read_in_image(file_path)
+        position_of_obstacle = self.get_position_of_obstacle(self.depth_image_callback)
+        
+        print(position_of_obstacle)
+    
 
 def main(args=None):
     rclpy.init(args=args)
