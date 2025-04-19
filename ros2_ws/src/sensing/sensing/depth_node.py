@@ -4,7 +4,7 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 import numpy as np
 import cv2
-from geometry_msgs.msg import Vector3
+from std_msgs.msg import Float32MultiArray, MultiArrayLayout, MultiArrayDimension
 
 class DepthListenerNode(Node):
     def __init__(self):                                               
@@ -26,7 +26,9 @@ class DepthListenerNode(Node):
 
         # Create a CvBridge to convert ROS Image messages to OpenCV format
         self.bridge = CvBridge()
-        self.publisher_ = self.create_publisher(Vector3,'position_data', 10)
+        self.publisher_ = self.create_publisher(Float32MultiArray,'position_data', 10)
+
+        self.timer = self.create_timer(5, self.depth_image_callback())
        
 
     def depth_image_callback(self, msg):
@@ -107,14 +109,37 @@ class DepthListenerNode(Node):
     def publish_direction_msg(self, depth_image, grid_size=[12, 12], distance_threshold=500):
         position, distance = self.get_position_distance_of_obstacle(depth_image, grid_size)
         lmr_position = int(position[0] // (grid_size[0]/3))
-        output_value = [-1, -1, -1]
-        output_msg = Vector3()
+        output_value = [float(-1.0), float(-1.0), float(-1.0)]
+
         if(distance < distance_threshold):
-            output_value[lmr_position] = distance
-        output_msg.x = float(output_value[0])
-        output_msg.y = float(output_value[1])
-        output_msg.z = float(output_value[2])
-        self.publisher_.publish(output_msg)
+            output_value[lmr_position] = float(distance)
+
+        # Creating a Float32MultiArray message
+        msg = Float32MultiArray()
+
+        # Define the layout (e.g., a 2x3 matrix)
+        layout = MultiArrayLayout()
+
+        # Dimensions
+        dim1 = MultiArrayDimension()
+        dim1.label = "rows"
+        dim1.size = 1
+        dim1.stride = 3  # Number of columns
+
+        dim2 = MultiArrayDimension()
+        dim2.label = "cols"
+        dim2.size = 3
+        dim2.stride = 1
+
+        layout.dim = [dim1, dim2]
+        layout.data_offset = 0
+
+        msg.layout = layout
+
+        # Populate the data (flattened row-major order)
+        msg.data = output_value
+        
+        self.publisher_.publish(msg)
         print("Publishing Data")
         #return output_msg #returns ros Vector3 message for publisher
 
