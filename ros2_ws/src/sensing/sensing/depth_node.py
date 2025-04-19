@@ -6,9 +6,15 @@ import numpy as np
 import cv2
 from geometry_msgs.msg import Vector3
 
+
 class DepthListenerNode(Node):
     def __init__(self):                                               
         super().__init__('depth_listener_node')
+
+        # Add frame counter and interval parameters
+        self.frame_count = 0
+        self.frame_interval = 30  # Process every 30th frame
+        
         # Create a subscriber for the depth topic
         self.subscription = self.create_subscription(
             Image,               # Message type
@@ -24,22 +30,28 @@ class DepthListenerNode(Node):
 
 
     def depth_image_callback(self, msg):
+        self.frame_count += 1
+        if self.frame_count % self.frame_interval != 0:
+            return
         try:
+            
             # Convert ROS Image message to OpenCV image
-            depth_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='passthrough')
-            # self.get_center_point(depth_image)            
+            depth_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='passthrough')        
             # Display depth image
             self.display_depth_image(depth_image)
-
+            depth_image_meters = (depth_image/1000).astype(float) #convert to meters by dividing by 1000 (normally in millimeters)
+            direction_message = self.get_direction_message(depth_image)
             ##### RUN ANY FOLLOWUP FUNCTIONS INSIDE OF THE CALLBACK #####
         except Exception as e:
             self.get_logger().error(f"Error converting ROS Image to OpenCV: {e}")
+
+    def depth_image_callback_loop()
 
     def display_depth_image(self, depth_image):
         # Normalize depth image to 8-bit for display purposes
         depth_image_normalized = cv2.normalize(depth_image, None, 0, 255, cv2.NORM_MINMAX)
         # Convert to 8-bit image for display (optional)
-        depth_image_normalized = np.uint8(depth_image_normalized)
+        depth_image_normalized = np.uint8(np.asanyarray(depth_image_normalized))
         # Example: Display the normalized depth image
         cv2.imshow("Depth Image", depth_image_normalized)
         cv2.waitKey(1)
@@ -93,7 +105,7 @@ class DepthListenerNode(Node):
         print(unraveled_min_value_position.shape)
         return unraveled_min_value_position, min_value_distance
 
-    def get_direction_distance(self, depth_image, grid_size=[12, 12], distance_threshold=0.5):
+    def get_direction_msg(self, depth_image, grid_size=[12, 12], distance_threshold=0.5):
         position, distance = self.get_position_distance_of_obstacle(depth_image, grid_size)
         lmr_position = position[0] // (grid_size[0]/3)
         output_value = [-1, -1, -1]
@@ -106,7 +118,11 @@ class DepthListenerNode(Node):
         return output_msg #returns ros Vector3 message for publisher
 
     def read_continuous_frames(self):
-        while 
+        while True:
+            self.get_depth_image_array()
+            if cv2.waitKey(1) == ord('q'):
+                self.pipe.stop()
+                self.get_depth_image_array()
 
     def read_in_image(self, file_path):
         #mg = cv2.imread('/Users/sara/Pictures/10-10-6k.jpg')
@@ -132,6 +148,8 @@ def main(args=None):
     
     try:
         rclpy.spin(node)  # Spin the node to keep it alive
+        while True:
+            node.
     except KeyboardInterrupt:
         pass
     finally:
