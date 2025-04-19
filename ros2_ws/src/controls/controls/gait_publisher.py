@@ -20,6 +20,12 @@ class gaitPublisher(Node):
          self.listener_callback, 
          10
          )
+    self.subscription = self.create_subscription(
+       Float32MultiArray,
+         'position_data', 
+         self.listener_callback_obstacle, 
+         10
+    )
     self.subscription
     #timer_period = 1
     #self.timer = self.create_timer(timer_period, self.pub_gait)
@@ -34,6 +40,10 @@ class gaitPublisher(Node):
       global imu_position
       imu_position = msg.data
       #self.get_logger().info(f'position: {msg.data}')
+  def listener_callback_obstacle(self,msg):
+     global obstacle
+     obstacle = msg.data
+     self.get_logger().info(f'obstacle: {msg.data}')
 
 global average_position
 average_position = []
