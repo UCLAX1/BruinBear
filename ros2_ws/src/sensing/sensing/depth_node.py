@@ -27,7 +27,8 @@ class DepthListenerNode(Node):
 
         # Create a CvBridge to convert ROS Image messages to OpenCV format
         self.bridge = CvBridge()
-        self.publisher() = 
+        self.publisher() = self.create_publisher(msg_type=Vector3, topic='topic', 10)
+
 
 
     def depth_image_callback(self, msg):
@@ -42,7 +43,7 @@ class DepthListenerNode(Node):
             self.display_depth_image(depth_image)
             depth_image_meters = (depth_image/1000).astype(float) #convert to meters by dividing by 1000 (normally in millimeters)
             direction_message = self.get_direction_message(depth_image)
-            self.publisher
+            self.publisher.publish(direction_message)
             ##### RUN ANY FOLLOWUP FUNCTIONS INSIDE OF THE CALLBACK #####
         except Exception as e:
             self.get_logger().error(f"Error converting ROS Image to OpenCV: {e}")
