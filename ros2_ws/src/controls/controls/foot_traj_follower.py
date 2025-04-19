@@ -38,7 +38,7 @@ class JointPosPublisher(Node):
          10
          )
       self.subscription
-      timer_period = 1
+      #timer_period = 1
       # self.timer = self.create_timer(timer_period, self.pub_actuator_pos)
       #self.gait = ""
   
@@ -51,7 +51,7 @@ class JointPosPublisher(Node):
    def listener_callback(self, msg):
       global gait
       gait = msg.data
-      self.get_logger().info(f'received gait: {msg.data}')
+      #self.get_logger().info(f'received gait: {msg.data}')
 
 
 

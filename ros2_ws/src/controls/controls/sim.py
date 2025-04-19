@@ -7,6 +7,8 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float32MultiArray
 from controls.foot_traj_follower import startPos
+import numpy as np
+from scipy.spatial.transform import Rotation as R
 
 # xml_path = 'hello.xml' #xml file (assumes this is in the same folder as this file)
 simend = 10 #simulation time
@@ -28,6 +30,7 @@ class jointPosSub(Node):
 
     def __init__(self):
         super().__init__('joint_pos_sub')
+        self.publisher_ = self.create_publisher(Float32MultiArray, 'imu_data', 10)
         self.subscription = self.create_subscription(
             Float32MultiArray,
             'joint_positions',
@@ -40,6 +43,12 @@ class jointPosSub(Node):
         global joints 
         joints = msg.data
 
+    def pub_imu_data(self, imu_data):
+        msg = Float32MultiArray()
+        msg.data = imu_data
+        #msg.data = [0.0,0.0]
+        self.publisher_.publish(msg)
+        #self.get_logger().info(f'Published imu data: {msg.data}')
 
 def init_controller(model,data):
     #initialize the controller here. This function is called once, in the beginning
@@ -97,7 +106,7 @@ def mouse_move(window, xpos, ypos):
         window, glfw.KEY_RIGHT_SHIFT) == glfw.PRESS
     mod_shift = (PRESS_LEFT_SHIFT or PRESS_RIGHT_SHIFT)
 
-    # determine action based on mouse button
+    # determine action based son mouse button
     if button_right:
         if mod_shift:
             action = mj.mjtMouse.mjMOUSE_MOVE_H
@@ -129,6 +138,24 @@ model = mj.MjModel.from_xml_path(modelPath)  # MuJoCo model
 data = mj.MjData(model)                     # MuJoCo data
 cam = mj.MjvCamera()                        # Abstract camera
 opt = mj.MjvOption()                        # visualization options
+
+
+def get_yaw_from_quaternion(quaternion):
+    """
+    Extracts the yaw angle (rotation around the z-axis) from a given quaternion.
+    
+    :param quaternion: A list or array of [x, y, z, w] representing the quaternion.
+    :return: Yaw angle in radians.
+    """
+    # Convert quaternion to rotation object
+    r = R.from_quat(quaternion)  # SciPy expects [x, y, z, w]
+    
+    # Convert to Euler angles (returns in radians)
+    euler_angles = r.as_euler('xyz', degrees=False)
+    
+    # Extract the yaw (rotation around z-axis)
+    yaw = euler_angles[0]  
+    return yaw
 
 def main(args=None):
     # Init GLFW, create window, make OpenGL context current, request v-sync
@@ -173,6 +200,9 @@ def main(args=None):
     simNode = jointPosSub()
     counter = 0
     global joints
+    #simNode.get_logger().info(f'qpos: {data.qpos}')
+    #startTime = time.time()
+    #simNode.get_logger().info(f'qpos: {type(float(round(get_yaw_from_quaternion(data.qpos[3:7]),4)))}')
 
     while not glfw.window_should_close(window):
         time_prev = data.time
@@ -190,9 +220,21 @@ def main(args=None):
             data.ctrl[FRR] = joints[9]
             data.ctrl[BRR] = joints[10]
             data.ctrl[BLR] = joints[11]
+
+
+            #if (cycle % 1000 == 0 ):
+                #simNode.get_logger().info(f'qpos: {data.qpos}')
+            #     simNode.get_logger().info(f'qpos: {get_yaw_from_quaternion(data.qpos[3:7])}')
+            #cycle += 1
+            #simNode.get_logger().info(f'qpos: {data.qpos}')
+            #simNode.get_logger().info(f'qvelocity: {data.qvel}')
+            #curTime = startTime-time.time()
             
 
             mj.mj_step(model, data)
+            if (counter % 100 == 0 ):
+                simNode.pub_imu_data([round(data.qpos[0],4),round(data.qpos[1],4),round(data.qpos[2],4),float(round(get_yaw_from_quaternion(data.qpos[3:7]),4))])
+            counter += 1
 
         viewport_width, viewport_height = glfw.get_framebuffer_size(
             window)
