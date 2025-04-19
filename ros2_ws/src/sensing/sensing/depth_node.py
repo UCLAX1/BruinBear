@@ -17,7 +17,7 @@ class DepthListenerNode(Node):
             10)                  # QoS settings (10 means at least 10 messages are buffered)
         # self.test()
 
-        #self.subscription  # Prevent unused variable warning
+        self.subscription  # Prevent unused variable warning
 
         # Create a CvBridge to convert ROS Image messages to OpenCV format
         self.bridge = CvBridge()
@@ -30,6 +30,8 @@ class DepthListenerNode(Node):
             # self.get_center_point(depth_image)            
             # Display depth image
             self.display_depth_image(depth_image)
+
+            ##### RUN ANY FOLLOWUP FUNCTIONS INSIDE OF THE CALLBACK #####
         except Exception as e:
             self.get_logger().error(f"Error converting ROS Image to OpenCV: {e}")
 
