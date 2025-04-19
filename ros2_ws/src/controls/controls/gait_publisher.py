@@ -2,6 +2,7 @@
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
+from geometry_msgs.msg import Twist
 import time
 global gait_origin, gait
 
@@ -20,7 +21,9 @@ class gaitPublisher(Node):
     self.publisher_.publish(msg)
     self.get_logger().info(f'Published gait: {msg.data}')
 
-
+def(self, min_value_position, min_value_distance):
+        twist_msg = Twist()
+        self.publisher.publish(twist_msg)
 
 def main(args=None):
     rclpy.init()
