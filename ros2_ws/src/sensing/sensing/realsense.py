@@ -6,12 +6,14 @@ import numpy as np
 import cv2
 from cv_bridge import CvBridge
 from matplotlib import pyplot as plt
+from geometry_msgs.msg import Twist
+from geometry_msgs.msg import Vector3
 
 class RealSenseNode(Node):
     def __init__(self):
         super().__init__('realsense_node')
         self.bridge = CvBridge()
-        self.publisher = self.create_publisher(Image, 'depth_image', 10)
+        self.publisher = self.create_publisher(Vector3, 'vector', 10)
 
         # Initialize RealSense pipeline
         self.pipeline = rs.pipeline()
@@ -32,7 +34,6 @@ class RealSenseNode(Node):
         self.timer = self.create_timer(0.1, self.publish_depth_image)
 
     def get_depth_image_array(self):
-
         frames = self.pipeline.wait_for_frames()
         aligned_frames = self.align.process(frames)
         depth_frame = aligned_frames.get_depth_frame()
@@ -42,13 +43,17 @@ class RealSenseNode(Node):
 
         # Convert depth frame to a numpy array
         depth_image = np.asanyarray(depth_frame.get_data())
-
+        cv2.imshow('depth', depth_image)
         return depth_image
 
     #get stream of images and continously publish
     def get_flow_of_images(self):
-        pass
-
+        while True:
+            self.get_depth_image_array()
+            if cv2.waitKey(1) == ord('q'):
+                self.pipe.stop()
+                self.get_depth_image_array()
+           
 
     def publish_depth_image(self):
         try:
@@ -136,13 +141,21 @@ def get_position_of_obstacle(depth_image):
             cell_average = np.mean(cell)
             blurred_depth_image_averages[i, j] = cell_average
 
-    max_value_position = np.argmin(blurred_depth_image_averages)
+    min_value_position = np.argmin(blurred_depth_image_averages)
+    min_value = np.min(blurred_depth_image_averages)
     #unravaled_max_value_position = np.unravel_index(max_value_position, np.array(grid_size).shape)
-    unraveled_x_position = max_value_position // grid_size[0]
-    unraveled_y_position = max_value_position % grid_size[1]
+    unraveled_x_position = min_value_position // grid_size[0]
+    unraveled_y_position = min_value_position % grid_size[1]
     unraveled_max_value_position = np.array([unraveled_x_position, unraveled_y_position])
     print(unraveled_max_value_position.shape)
     return unraveled_max_value_position
+
+def determine_movement(min_value_distance, min_value_position):
+    threshold_distance = 1
+    if(min_value_distance < threshold_distance):
+        twist_msg = Twist()
+    self.publisher.publish(twist_msg)
+        return 
 
 def read_in_image(file_path):
     #mg = cv2.imread('/Users/sara/Pictures/10-10-6k.jpg')

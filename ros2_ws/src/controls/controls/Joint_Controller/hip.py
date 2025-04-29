@@ -1,37 +1,27 @@
 import time
+from HardwareInterface import CanBus, Motor
 
 class Hip:
-    def __init__(self, kp, ki, kd, leg_id, dt=0.01):
-        # PID coefficients
-        self.kp = kp
-        self.ki = ki
-        self.kd = kd
-        
-        # Time step
-        self.dt = dt
-        
+    kp = 0.00001  # Proportional gain
+    ki = 0.0  # Integral gain
+    kd = 0.00000005  # Derivative gain
+    dt = 0.01  # Time step for PID loop
+    
+    def __init__(self, motor_id : int, can_bus : CanBus, inverted=False, leg_id="leg"):
+        self.motor = Motor(can_bus, motor_id)
+                
         # PID variables
         self.previous_error = 0
         self.integral = 0
         
-        # Motor power and current position
         self.motor_power = 0
-        self.current_position = 0  # Simulated encoder value
-        
-        # Target position
         self.target_position = 0
-        
-        # Leg ID (e.g., "front-left-hip")
-        self.leg_id = leg_id
-    
+            
     def set_target_position(self, target):
-        """Set the target position for the hip"""
         self.target_position = target
     
     def get_current_position(self):
-        """Simulate reading encoder values for the current position"""
-        # Replace with actual encoder reading for the hip motor
-        return self.current_position
+        return self.motor.get_pos()
     
     def update_motor_power(self):
         """Run the PID loop and calculate motor power"""
@@ -56,9 +46,8 @@ class Hip:
         self.apply_motor_power(self.motor_power)
     
     def apply_motor_power(self, power):
-        """Simulate applying motor power and updating position"""
-        # Replace with actual motor driver code
-        self.current_position += power * self.dt  # Simplistic model for demo
+        self.motor.set_power(power)
+        self.motor.send_hearbeat()
     
     def __str__(self):
         """Return a string representation of the hip state."""

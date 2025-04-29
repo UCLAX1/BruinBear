@@ -12,7 +12,7 @@ ros2 launch realsense2_camera rs_launch.py enable_accel:=true enable_gyro:=true 
 # Run the second package in the background
 ros2 run sensing depth &
 
-ros2 run sensing face &
+# ros2 run sensing face &
 
 # Wait for all background processes to finish
 wait
