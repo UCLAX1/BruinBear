@@ -65,7 +65,7 @@ class jointPosSub(Node):
         else:
             msg.data.append(-1)
         self.publisher_.publish(msg)
-        self.get_logger().info("publishing: " + str(msg)) 
+        #self.get_logger().info("publishing: " + str(msg)) 
 
 def get_yaw_from_quaternion(quaternion):
     """
@@ -314,27 +314,8 @@ cube_qpos_addr2 = model.jnt_qposadr[cube2]  # Get qpos index for the cube joint
 cube3 = mj.mj_name2id(model,mj.mjtObj.mjOBJ_JOINT, 'box-joint3')
 cube_qpos_addr3 = model.jnt_qposadr[cube3]  # Get qpos index for the cube joint
 
-com_id = mj.mj_name2id(model, mj.mjtObj.mjOBJ_BODY, 'com-sphere')
-
-def getRange(rangefinder_name):
-    # mujoco.mj_resetData(model, data)
-    # data.ctrl = 20
-    return data.sensor(rangefinder_name).data.copy()
-
-rclpy.init()
-counter = 0
-globalRobotState = 'start'
-startedWalking = False
-motorSpeed = 0.001
-
-cube1 = mj.mj_name2id(model,mj.mjtObj.mjOBJ_JOINT, 'box-joint1')
-cube_qpos_addr1 = model.jnt_qposadr[cube1]  # Get qpos index for the cube joint
-
-cube2 = mj.mj_name2id(model,mj.mjtObj.mjOBJ_JOINT, 'box-joint2')
-cube_qpos_addr2 = model.jnt_qposadr[cube2]  # Get qpos index for the cube joint
-
-cube3 = mj.mj_name2id(model,mj.mjtObj.mjOBJ_JOINT, 'box-joint3')
-cube_qpos_addr3 = model.jnt_qposadr[cube3]  # Get qpos index for the cube joint
+bear = mj.mj_name2id(model,mj.mjtObj.mjOBJ_JOINT, 'wrapper')
+bear_qpos = model.jnt_qposadr[cube3]  # Get qpos index for bear
 
 com_id = mj.mj_name2id(model, mj.mjtObj.mjOBJ_BODY, 'com-sphere')
 
@@ -348,8 +329,6 @@ counter = 0
 globalRobotState = 'start'
 startedWalking = False
 motorSpeed = 0.001
-
-
 
 
 def main(args=None):
@@ -401,8 +380,13 @@ def main(args=None):
     cam.elevation = -35 # Adjust the elevation if necessary
     # Update scene and render
 
+    simNode.get_logger().info(f'Published imu data: {data.qpos}')
+    simNode.get_logger().info(f'Published imu data: {data.qpos[cube_qpos_addr2]}')
+    simNode.get_logger().info(f'Published imu data: {cube_qpos_addr2}')
+
     while not glfw.window_should_close(window):
         time_prev = data.time
+
         while data.time - time_prev < 1.0/displayRefreshRate:
             rclpy.spin_once(simNode, timeout_sec=0)
             simNode.pub_rangefinder_data()
@@ -483,7 +467,9 @@ def main(args=None):
 
             mj.mj_step(model, data)
             if (counter % 100 == 0 ):
-                simNode.pub_imu_data([round(data.qpos[0],4),round(data.qpos[1],4),round(data.qpos[2],4),float(round(get_yaw_from_quaternion(data.qpos[3:7]),4))])
+                continue
+                #simNode.get_logger().info(f'Published imu data: {data.qpos}')
+                #simNode.pub_imu_data([round(data.qpos[bear_qpos][0],4),round(data.qpos[bear_qpos][1],4),round(data.qpos[bear_qpos][2],4),float(round(get_yaw_from_quaternion(data.qpos[bear_qpos][3:7]),4))])
             counter += 1
 
         viewport_width, viewport_height = glfw.get_framebuffer_size(

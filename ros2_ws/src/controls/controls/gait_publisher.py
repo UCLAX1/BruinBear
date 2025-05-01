@@ -22,7 +22,7 @@ class gaitPublisher(Node):
          )
     self.subscription = self.create_subscription(
        Float32MultiArray,
-         'position_data', 
+         'rangefinder_data', 
          self.listener_callback_obstacle, 
          10
     )
@@ -43,7 +43,7 @@ class gaitPublisher(Node):
   def listener_callback_obstacle(self,msg):
      global obstacle
      obstacle = msg.data
-     self.get_logger().info(f'obstacle: {msg.data}')
+     #self.get_logger().info(f'obstacle: {msg.data}')
 
 global average_position
 average_position = []
@@ -116,7 +116,7 @@ def main(args=None):
     startTime = time.time()
     global average_position
     global obstacle
-    obstacle = [-1,1,-1]
+    #obstacle = [-1,1,-1]
 
     gait_origin = ""
     gait = "s"
@@ -130,30 +130,24 @@ def main(args=None):
     state = "f"
     gait = "f"
     flag = True
-   #  global cycle
-   #  cycle = 0
+    global cycle
+    cycle = 0
 
     while True:
-        # curTime = time.time() - startTime
-    
-        # if (curTime % 20 < 6):
-        #     gait = "rnr"
-        # else:
-        #     gait = "f"
-        #cycle = 0
+ 
         rclpy.spin_once(gaitNode, timeout_sec=0)
         #update_average(imu_position)
 
-      #   if (cycle % 1000 == 0 ):
-      #       gaitNode.get_logger().info(f'Published gait: {imu_position}')
-      #       cycle += 1
+        if (cycle % 1000 == 0 ):
+            gaitNode.get_logger().info(f'Published obstacle: {obstacle}')
+        cycle += 1
         
 
         match state:
          case "forward" | "f":
             gait = "f"
             #gaitNode.get_logger().info(f'inside forward: {"a"}')
-            if obstacle[1]!=-1:
+            if obstacle[1]!=-1 and obstacle[1] <= 50:
                #gaitNode.get_logger().info(f'inside obstacle: {"a"}')
                state = "af"
                substate = "rnr"
@@ -176,11 +170,11 @@ def main(args=None):
                      startPos = imu_position
                      startTime = time.time()
                      flag = False
-                  if turn_n_deg(45):
+                  if turn_n_sec(3):
                   #if turn_n_sec(3):
                      if isavoided:
                         state = "f"
-                        obstacle = [-1,-1,-1]
+                     
                      else:
                         substate = "f"
                         flag = True
@@ -193,7 +187,7 @@ def main(args=None):
                      startTime = time.time()
                      flag = False
                      gait = "f"
-                  if walk_forward_n_sec(5):
+                  if walk_forward_n_sec(7):
                      if turningback:
                         substate = "lnr"
                      else:
@@ -207,7 +201,7 @@ def main(args=None):
                      startPos = imu_position
                      startTime = time.time()
                      flag = False
-                  if turn_n_deg(90):
+                  if turn_n_sec(6):
                   #if turn_n_sec(6):
                      substate = "f"
                      flag = True
