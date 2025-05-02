@@ -7,6 +7,8 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float32MultiArray
 from controls.foot_traj_follower import startPos
+import numpy as np
+from scipy.spatial.transform import Rotation as R
 
 # xml_path = 'hello.xml' #xml file (assumes this is in the same folder as this file)
 simend = 10 #simulation time
@@ -28,6 +30,7 @@ class jointPosSub(Node):
 
     def __init__(self):
         super().__init__('joint_pos_sub')
+        self.publisher_ = self.create_publisher(Float32MultiArray, 'imu_data', 10)
         self.subscription = self.create_subscription(
             Float32MultiArray,
             'joint_positions',
@@ -41,6 +44,12 @@ class jointPosSub(Node):
         global joints 
         joints = msg.data
 
+    def pub_imu_data(self, imu_data):
+        msg = Float32MultiArray()
+        msg.data = imu_data
+        #msg.data = [0.0,0.0]
+        self.publisher_.publish(msg)
+        #self.get_logger().info(f'Published imu data: {msg.data}')
     def pub_rangefinder_data(self):
         msg = Float32MultiArray()
         if(getRange('range1') < 2000):
@@ -56,44 +65,31 @@ class jointPosSub(Node):
         else:
             msg.data.append(-1)
         self.publisher_.publish(msg)
-        self.get_logger().info("publishing: " + str(msg)) 
+        #self.get_logger().info("publishing: " + str(msg)) 
 
+def get_yaw_from_quaternion(quaternion):
+    """
+    Extracts the yaw angle (rotation around the z-axis) from a given quaternion.
     
-
-#Rangefinder publisher
-class RangefinderPub(Node):
-  def __init__(self):
-    super().__init__('rangefinder_pub')
-    self.publisher_ = self.create_publisher(Float32MultiArray, 'rangefinder_data', 10)
-    timer_period = 0.5
-    # self.timer = self.create_timer(timer_period, self.pub_rangefinder_data)
-
-
-  def pub_rangefinder_data(self):
-    msg = Float32MultiArray()
-    if(getRange('range1') < 2000):
-        msg.data.append(getRange('range2'))
-    else:
-        msg.data.append(-1)
-    if(getRange('range2') < 2000):
-        msg.data.append(getRange('range1'))
-    else:
-        msg.data.append(-1)
-    if(getRange('range3') < 2000):
-        msg.data.append(getRange('range3'))
-    else:
-        msg.data.append(-1)
-    # self.publisher_.publish(msg)
-    # self.get_logger().info("publishing: " + str(msg)) 
-    # print("\033c") # disable if this causes problems, just clears the terminal  
-    # ('Rangefinder Data: "%s"' % msg.data)
-
+    :param quaternion: A list or array of [x, y, z, w] representing the quaternion.
+    :return: Yaw angle in radians.
+    """
+    # Convert quaternion to rotation object
+    r = R.from_quat(quaternion)  # SciPy expects [x, y, z, w]
+    
+    # Convert to Euler angles (returns in radians)
+    euler_angles = r.as_euler('xyz', degrees=False)
+    
+    # Extract the yaw (rotation around z-axis)
+    yaw = euler_angles[0]  
+    return yaw
 
 keyBoardControl = 'none'
 cubeControl1 = 'none'
 cubeControl2 = 'none'
 cubeControl3 = 'none'
 cameraControl = 'none'
+
 def keyboard_callback(window, key, scancode, action, mods):
     global keyBoardControl, cameraControl, cubeControl1, cubeControl2, cubeControl3
     if action == glfw.PRESS or action == glfw.REPEAT:  # Handle key press or hold
@@ -276,7 +272,7 @@ def mouse_move(window, xpos, ypos):
         window, glfw.KEY_RIGHT_SHIFT) == glfw.PRESS
     mod_shift = (PRESS_LEFT_SHIFT or PRESS_RIGHT_SHIFT)
 
-    # determine action based on mouse button
+    # determine action based son mouse button
     if button_right:
         if mod_shift:
             action = mj.mjtMouse.mjMOUSE_MOVE_H
@@ -318,6 +314,9 @@ cube_qpos_addr2 = model.jnt_qposadr[cube2]  # Get qpos index for the cube joint
 cube3 = mj.mj_name2id(model,mj.mjtObj.mjOBJ_JOINT, 'box-joint3')
 cube_qpos_addr3 = model.jnt_qposadr[cube3]  # Get qpos index for the cube joint
 
+bear = mj.mj_name2id(model,mj.mjtObj.mjOBJ_JOINT, 'wrapper')
+bear_qpos = model.jnt_qposadr[cube3]  # Get qpos index for bear
+
 com_id = mj.mj_name2id(model, mj.mjtObj.mjOBJ_BODY, 'com-sphere')
 
 def getRange(rangefinder_name):
@@ -330,6 +329,7 @@ counter = 0
 globalRobotState = 'start'
 startedWalking = False
 motorSpeed = 0.001
+
 
 def main(args=None):
     # Init GLFW, create window, make OpenGL context current, request v-sync
@@ -380,8 +380,13 @@ def main(args=None):
     cam.elevation = -35 # Adjust the elevation if necessary
     # Update scene and render
 
+    simNode.get_logger().info(f'Published imu data: {data.qpos}')
+    simNode.get_logger().info(f'Published imu data: {data.qpos[cube_qpos_addr2]}')
+    simNode.get_logger().info(f'Published imu data: {cube_qpos_addr2}')
+
     while not glfw.window_should_close(window):
         time_prev = data.time
+
         while data.time - time_prev < 1.0/displayRefreshRate:
             rclpy.spin_once(simNode, timeout_sec=0)
             simNode.pub_rangefinder_data()
@@ -461,6 +466,11 @@ def main(args=None):
             
 
             mj.mj_step(model, data)
+            if (counter % 100 == 0 ):
+                continue
+                #simNode.get_logger().info(f'Published imu data: {data.qpos}')
+                #simNode.pub_imu_data([round(data.qpos[bear_qpos][0],4),round(data.qpos[bear_qpos][1],4),round(data.qpos[bear_qpos][2],4),float(round(get_yaw_from_quaternion(data.qpos[bear_qpos][3:7]),4))])
+            counter += 1
 
         viewport_width, viewport_height = glfw.get_framebuffer_size(
             window)

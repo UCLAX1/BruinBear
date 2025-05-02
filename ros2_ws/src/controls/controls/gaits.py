@@ -29,7 +29,7 @@ class Stand(Gait):
         super().__init__(logger)
 
     def getPos(self, time):
-        return [0, -0.3, 0] * 4
+        return [[0, -0.3, 0],[0, -0.3, 0],[0, -0.3, 0],[0, -0.3, 0]]
 
 class Walk(Gait):
     def __init__(self, logger = None):

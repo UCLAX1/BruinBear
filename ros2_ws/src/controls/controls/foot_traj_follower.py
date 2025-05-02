@@ -15,15 +15,17 @@ import controls.gaits as gaits
 import controls.gait_publisher as publisher
 
 
-startPos = [0] * 12
-# startfront = solveIK([0,-0.3,0])
-# startback = solveIK([0,-0.3,0], True)
-# startPos = [startfront[0], startfront[0],
-#             startfront[1], startfront[1],
-#             startback[0], startback[0],
-#             startback[1], startback[1],
-#             0, 0, 0, 0]
+#startPos = [0] * 12
 
+pos_start = [[0, -0.3, 0],[0, -0.3, 0],[0, -0.3, 0],[0, -0.3, 0]]
+
+posFL_start = solveIK(pos_start[0])
+posFR_start = solveIK(pos_start[1])
+posBR_start = solveIK(pos_start[2], True)
+posBL_start = solveIK(pos_start[3], True)
+startPos = [posFL_start[0], posFR_start[0], posBR_start[0], posBL_start[0], 
+                        posFL_start[1], posFR_start[1], posBR_start[1], posBL_start[1], 
+                        posFL_start[2], posFR_start[2], posBR_start[2], posBL_start[2]]
 
 class JointPosPublisher(Node):
    def __init__(self):
@@ -36,7 +38,7 @@ class JointPosPublisher(Node):
          10
          )
       self.subscription
-      timer_period = 1
+      #timer_period = 1
       # self.timer = self.create_timer(timer_period, self.pub_actuator_pos)
       #self.gait = ""
   
@@ -47,26 +49,11 @@ class JointPosPublisher(Node):
       #self.get_logger().info(f'received gait: {msg.data}')
    
    def listener_callback(self, msg):
-      #self.gait
-      #self.gait
       global gait
       gait = msg.data
-      self.get_logger().info(f'received gait: {msg.data}')
+      #self.get_logger().info(f'received gait: {msg.data}')
 
 
-
-
-# class jointPosSub(Node):
-
-#     def __init__(self):
-#         super().__init__('gait_sub')
-#         self.subscription = self.create_subscription(String,'gait', self.listener_callback, 10)
-#         self.subscription  # prevent unused variable warning
-
-#     def listener_callback(self, msg):
-#         # self.get_logger().info('recieved positions')
-#         global gait
-#         gait = msg.data
 
 
 startTime = time.time()
@@ -100,6 +87,8 @@ def GeneratePosition():
             gaitTraj = gaits.TurnInPlaceNoRoll(turnRight=True, logger=trajNode.get_logger())
          case "leftInPlaceNoRoll"|"lnr":
             gaitTraj = gaits.TurnInPlaceNoRoll(turnRight=False, logger=trajNode.get_logger())
+         case "standing" | "s":
+            gaitTraj = gaits.Stand(trajNode.get_logger())
          case "leftInPlaceWithRoll"|"lwr":
             gaitTraj = gaits.TurnInPlaceWithRoll(turnRight=False, logger=trajNode.get_logger())
          case "rightInPlaceWithRoll"|"rwr":
@@ -128,19 +117,10 @@ def main(args=None):
    rclpy.init()
    global trajNode 
    trajNode = JointPosPublisher()
-   #rclpy.spin(trajNode)
-   #gait_publisher = publisher()
-   #trajNode.listener_callback()
-   #gait = trajNode.gait
    global gait
    gait = "f"
-   #print(gait)
-
 
    walking = True
-
-   #  gait = jointPosSub()
-   #  global joints
 
    time.sleep(2)
    #wait for the model to drop in the sim
