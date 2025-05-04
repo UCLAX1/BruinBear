@@ -5,15 +5,17 @@ import numpy as np
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String, Float32MultiArray
-import navigation
 
+# import old_sim.navigation_logic as navigation_logic
+import navigation
+import keyboard_control
 
 
 print_camera_config = 1 #set to 1 to print camera config
                         #this is useful for initializing view of the model
 
 modelPath = '/home/sara/Documents/BruinBear/ros2_ws/quadruped-new/quadruped_o.xml'
-displayRefreshRate = 60
+displayRefreshRate = 240
 class ActuatorPositionPub(Node):
   def __init__(self):
     super().__init__('actuator_pos_pub')
@@ -228,7 +230,7 @@ com_id = mj.mj_name2id(model, mj.mjtObj.mjOBJ_BODY, 'com-sphere')
 rclpy.init()
 actuatorPositionNode = ActuatorPositionPub()
 # randgefinderNode = RangefinderPub()
-counter = 0
+# counter = 0
 globalRobotState = 'start'
 startedWalking = False
 motorSpeed = 0.001
@@ -302,7 +304,9 @@ class RobotStateMachine:
     def __init__(self):
         self.state = 'get neutral'
 
-    def step(self, direction):
+    def step(self, direction: int):
+        """ 1 for fwd, -1 for back
+        """
         # print(self.state)
         if (self.state == 'get neutral'):
             self.neutralPos()
@@ -321,7 +325,10 @@ class RobotStateMachine:
             self.walkCounter += 1
             self.state = 'INIT'  # Reset or set up for next step
 
-    def turn(self, direction):
+    def turn(self, direction: String):
+        """
+        takes in either 'left' or 'right'
+        """
         oppositeDirection = 'right'
         if direction == 'right':
             oppositeDirection = 'left'
@@ -344,6 +351,7 @@ class RobotStateMachine:
             self.state = "INIT"
 
     def neutralPos(self):
+        '''returns robot back to neutral; returns INIT when @ neutral'''
         positionTargetX = 0.02
         positionTargetY = .34
         positionTargetZ = 0.0
@@ -570,7 +578,7 @@ class RobotStateMachine:
         return False
 
 robot_fsm = RobotStateMachine()
-        
+
 def getCoM():
     total_mass = 0
     com = np.zeros(3)
@@ -592,6 +600,7 @@ def getRange(rangefinder_name):
     # data.ctrl = 20
     return data.sensor(rangefinder_name).data.copy()
 
+
 # Init GLFW, create window, make OpenGL context current, request v-sync
 glfw.init()
 window = glfw.create_window(int(1200*0.6), int(900*0.6), "Quadruped", None, None)
@@ -607,138 +616,36 @@ context = mj.MjrContext(model, mj.mjtFontScale.mjFONTSCALE_150.value)
 # install GLFW mouse and keyboard callbacks
 glfw.set_key_callback(window, keyboard_callback)
 
+# Default camera settings
 cam.distance = 2
 cam.azimuth = 45
 cam.elevation = -35
 cam.orthographic = 1
 robot_fsm.__init__
-previous_nav = 'none'
-action_buffer = 2000
-fwd_buffer = 500
-action_counter = 0
+
 while not glfw.window_should_close(window):
     time_prev = data.time
-    direction = 0
-
     while data.time - time_prev < 1.0 / displayRefreshRate:
-        # randgefinderNode.pub_rangefinder_data()
-        print('range 1: ' + str(getRange('range1')))
-        print('range 2: ' + str(getRange('range2')))
-        print('range 3: ' + str(getRange('range3')))
 
-        ranges = [getRange('range1'), getRange('range2'), getRange('range3')]
-        print(str(min(ranges)))
-        if min(ranges) < 0.2 and min(ranges) != -1:
-            nav = 'back'
-        elif previous_nav == 'fwd':
-            if counter >= fwd_buffer or counter == 0:
-                nav = navigation.navigate(getRange('range1'), getRange('range2'), getRange('range3'))
-                counter = 0
-        elif counter >= action_buffer or counter == 0:
-            nav = navigation.navigate(getRange('range1'), getRange('range2'), getRange('range3'))
-            counter = 0
-        counter += 1
-        print(f'nav: {nav}')
-        # print(f'robot state: {robot_fsm.state}')
-        if nav != previous_nav:
-            robot_fsm.neutralPos()
-        elif nav == 'fwd' :
-            robot_fsm.step(1)
-        elif nav == 'back':
-            robot_fsm.step(-1)
-        elif nav == 'left':
-            robot_fsm.turn('left')
-        elif nav == 'right':
-            robot_fsm.turn('right')
-        if robot_fsm.state == 'INIT':
-            previous_nav = nav
-        # else:
-        #     robot_fsm.neutralPos
-        
-        
+        # Autonomous Navigation
+        navigation.automate([getRange('range1'), getRange('range2'), getRange('range3')],robot_fsm)
+
         # Keyboard Control
-        # if keyBoardControl == 'fwd':
-        #     robot_fsm.step(1)
-        # elif keyBoardControl == 'lft':
-        #     robot_fsm.turn("left")
-        # elif keyBoardControl == 'rgt':
-        #     robot_fsm.turn('right')
-        # elif keyBoardControl == 'bck':
-        #     robot_fsm.step(-1)
-        # elif keyBoardControl == 'nut':
-        #     robot_fsm.neutralPos()
+        '''diabled to run autonmously'''
+        # keyboard_control.controlRobot(keyBoardControl,robot_fsm) d
 
-        if cubeControl1 == 'cube_fwd':
-            data.qpos[cube_qpos_addr1] += 0.001 
-        elif cubeControl1 == 'cube_bck':
-            data.qpos[cube_qpos_addr1] -= 0.001
-        elif cubeControl1 == 'cube_right':
-            data.qpos[cube_qpos_addr1 + 1] += 0.001
-        elif cubeControl1 == 'cube_left':
-            data.qpos[cube_qpos_addr1 + 1] -= 0.001
-        elif cubeControl1 == 'cube_rot_cw':
-            data.qpos[cube_qpos_addr1 + 6] += 0.001
-        elif cubeControl1 == 'cube_rot_ccw':
-            data.qpos[cube_qpos_addr1 + 6] -= 0.001
-        
-        if cubeControl2 == 'cube_fwd':
-            data.qpos[cube_qpos_addr2] += 0.001 
-        elif cubeControl2 == 'cube_bck':
-            data.qpos[cube_qpos_addr2] -= 0.001
-        elif cubeControl2 == 'cube_right':
-            data.qpos[cube_qpos_addr2 + 1] += 0.001
-        elif cubeControl2 == 'cube_left':
-            data.qpos[cube_qpos_addr2 + 1] -= 0.001
-        elif cubeControl2 == 'cube_rot_cw':
-            data.qpos[cube_qpos_addr2 + 6] += 0.001
-        elif cubeControl2 == 'cube_rot_ccw':
-            data.qpos[cube_qpos_addr2 + 6] -= 0.001
+        # Control Obstacles
+        keyboard_control.controlObstacle(cubeControl1,data,cube_qpos_addr1)
+        keyboard_control.controlObstacle(cubeControl2,data,cube_qpos_addr2)
+        keyboard_control.controlObstacle(cubeControl3,data,cube_qpos_addr3)
 
-        if cubeControl3 == 'cube_fwd':
-            data.qpos[cube_qpos_addr3] += 0.001 
-        elif cubeControl3 == 'cube_bck':
-            data.qpos[cube_qpos_addr3] -= 0.001
-        elif cubeControl3 == 'cube_right':
-            data.qpos[cube_qpos_addr3 + 1] += 0.001
-        elif cubeControl3 == 'cube_left':
-            data.qpos[cube_qpos_addr3 + 1] -= 0.001
-        elif cubeControl3 == 'cube_rot_cw':
-            data.qpos[cube_qpos_addr3 + 6] += 0.001
-        elif cubeControl3 == 'cube_rot_ccw':
-            data.qpos[cube_qpos_addr3 + 6] -= 0.001
+        # Control Camera
+        keyboard_control.controlCamera(cameraControl,cam)
 
-        if cameraControl == 'down':
-            cam.elevation -= 0.1
-        elif cameraControl == 'up':
-            cam.elevation += 0.1
-        elif cameraControl == 'right':
-            cam.azimuth -= 0.1
-        elif cameraControl == 'left':
-            cam.azimuth += 0.1
-        elif cameraControl == 'home':
-            if cam.azimuth > 45:
-                while cam.azimuth > 45:
-                    cam.azimuth -= 0.1
-            if cam.azimuth < 45:
-                while cam.azimuth < 45:
-                    cam.azimuth += 0.1
-            if cam.elevation > -35:
-                while cam.elevation > -35:
-                    cam.elevation -= 0.1
-            if cam.elevation < -35:
-                while cam.elevation < -35:
-                    cam.elevation += 0.1
-        # # Step the MuJoCo simulation
-        # robot_fsm.turn('left')
-
-        # data.mocap_pos[0] = getCoM()
+        # Step the MuJoCo simulation
         mj.mj_step(model, data)
         glfw.poll_events()
 
-        # Add rendering or debugging code here if needed
-        if counter % 100 == 0:
-            pass
-            # Add any periodic debugging or state updates here
 
     # Handle rendering
     viewport_width, viewport_height = glfw.get_framebuffer_size(window)

@@ -1,33 +1,40 @@
-import numpy as np
-previousAction = 'neutral'
-actions = ['left', 'right']
-state = 'none'
+import navigation_logic
 
-def navigate(range1,range2,range3):
-    global previousAction, actions, state
-    action = 'neutral'
-    if previousAction == 'back':
-       action =  actions[np.random.randint(0,1)]
-    elif (range2 < 0.5 and range2 != -1) or (range2 < 1 and range1 < 1 and range2 != -1 and range1 != -1):
-        action = 'right'
-    elif (range3 < 0.5 and range3 != -1) or (range3 < 1 and range1 < 1 and range3 != -1 and range1 != -1):
-        action = 'left'
-    elif range1 < 0.3 and range1 > 0:
-        # print('back hit')
-        action = 'back'
-    elif range2 < 1 and range3 < 1 and range2 > 0 and range3 > 0:
-        action = 'back'
-    elif range1 > 0.5 and range1 > 0:
-        action = 'fwd'
-    else:
-        if state == 'random':
-            action = previousAction
-        else:
-            randInt = np.random.randint(0,1)
-            action = actions[randInt]
-        pass
-        state = 'random'
+fwd_buffer = 500
+action_buffer = 2000
+counter = 0
+previous_nav = 'none'
+nav = 'non'
 
-    previousAction = action
 
-    return action
+def automate(ranges: list,robot_fsm):
+    '''3 rangefinder distances + robot_fsm: \n
+    ([range1, range2, range3], fsm)'''
+    global fwd_buffer,action_buffer,counter, previous_nav, nav
+    
+    # print(str(min(ranges)))
+    
+    if min(ranges) < 0.2 and min(ranges) != -1:
+        nav = 'back'
+    elif previous_nav == 'fwd':
+        if counter >= fwd_buffer or counter == 0:
+            nav = navigation_logic.navigate(ranges[0], ranges[1], ranges[2])
+            counter = 0
+    elif counter >= action_buffer or counter == 0:
+        nav = navigation_logic.navigate(ranges[0], ranges[1], ranges[2])
+        counter = 0
+    counter += 1
+    # print(f'nav: {nav}')
+    # print(f'robot state: {robot_fsm.state}')
+    if nav != previous_nav:
+        robot_fsm.neutralPos()
+    elif nav == 'fwd' :
+        robot_fsm.step(1)
+    elif nav == 'back':
+        robot_fsm.step(-1)
+    elif nav == 'left':
+        robot_fsm.turn('left')
+    elif nav == 'right':
+        robot_fsm.turn('right')
+    if robot_fsm.state == 'INIT':
+        previous_nav = nav

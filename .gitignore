@@ -10,3 +10,4 @@ MUJOCO_LOG.TXT
 venv/
 vendordeps/REVLib.json
 vendordeps/WPILibNewCommands.json
+*/__pycache__
