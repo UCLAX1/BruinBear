@@ -5,13 +5,14 @@ import numpy as np
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String, Float32MultiArray
+import navigation
 
 
 
 print_camera_config = 1 #set to 1 to print camera config
                         #this is useful for initializing view of the model
 
-modelPath = '/home/jc/BruinBear/ros2_ws/quadruped-new/quadruped_o.xml'
+modelPath = '/home/sara/Documents/BruinBear/ros2_ws/quadruped-new/quadruped_o.xml'
 displayRefreshRate = 60
 class ActuatorPositionPub(Node):
   def __init__(self):
@@ -32,25 +33,26 @@ class RangefinderPub(Node):
   def __init__(self):
     super().__init__('rangefinder_pub')
     self.publisher_ = self.create_publisher(Float32MultiArray, 'rangefinder_data', 10)
-    timer_period = 0.5
+    # timer_period = 0.5
     # self.timer = self.create_timer(timer_period, self.pub_rangefinder_data)
 
-  def pub_rangefinder_data(self):
-    msg = Float32MultiArray()
-    if(getRange('range1') < 2000):
-        msg.data.append(getRange('range2'))
-    else:
-        msg.data.append(-1)
-    if(getRange('range2') < 2000):
-        msg.data.append(getRange('range1'))
-    else:
-        msg.data.append(-1)
-    if(getRange('range3') < 2000):
-        msg.data.append(getRange('range3'))
-    else:
-        msg.data.append(-1)
-    self.publisher_.publish(msg)
-    self.get_logger().info("publishing: " + str(msg)) 
+#   def pub_rangefinder_data(self):
+#     msg = Float32MultiArray()
+#     if(getRange('range1') < 2000):
+#         msg.data.append(getRange('range2'))
+#     else:
+#         msg.data.append(-1)
+#     if(getRange('range2') < 2000):
+#         msg.data.append(getRange('range1'))
+#     else:
+#         msg.data.append(-1)
+#     if(getRange('range3') < 2000):
+#         msg.data.append(getRange('range3'))
+#     else:
+#         msg.data.append(-1)
+    
+    # self.publisher_.publish(msg)
+    # self.get_logger().info("publishing: " + str(msg)) 
     # print("\033c") # disable if this causes problems, just clears the terminal  
     # ('Rangefinder Data: "%s"' % msg.data)
 
@@ -119,7 +121,7 @@ def keyboard_callback(window, key, scancode, action, mods):
             cubeControl3 = 'cube_right'
         elif key == glfw.KEY_N:
             cubeControl3 = 'cube_rot_ccw'
-        elif key == glfw.KEY_:
+        elif key == glfw.KEY_M:
             cubeControl3 = 'cube_rot_cw'
         
     elif action == glfw.RELEASE:
@@ -225,7 +227,7 @@ com_id = mj.mj_name2id(model, mj.mjtObj.mjOBJ_BODY, 'com-sphere')
 
 rclpy.init()
 actuatorPositionNode = ActuatorPositionPub()
-randgefinderNode = RangefinderPub()
+# randgefinderNode = RangefinderPub()
 counter = 0
 globalRobotState = 'start'
 startedWalking = False
@@ -610,23 +612,61 @@ cam.azimuth = 45
 cam.elevation = -35
 cam.orthographic = 1
 robot_fsm.__init__
+previous_nav = 'none'
+action_buffer = 2000
+fwd_buffer = 500
+action_counter = 0
 while not glfw.window_should_close(window):
     time_prev = data.time
     direction = 0
 
     while data.time - time_prev < 1.0 / displayRefreshRate:
-        randgefinderNode.pub_rangefinder_data()
-        # Keyboard Control
-        if keyBoardControl == 'fwd':
-            robot_fsm.step(1)
-        elif keyBoardControl == 'lft':
-            robot_fsm.turn("left")
-        elif keyBoardControl == 'rgt':
-            robot_fsm.turn('right')
-        elif keyBoardControl == 'bck':
-            robot_fsm.step(-1)
-        elif keyBoardControl == 'nut':
+        # randgefinderNode.pub_rangefinder_data()
+        print('range 1: ' + str(getRange('range1')))
+        print('range 2: ' + str(getRange('range2')))
+        print('range 3: ' + str(getRange('range3')))
+
+        ranges = [getRange('range1'), getRange('range2'), getRange('range3')]
+        print(str(min(ranges)))
+        if min(ranges) < 0.2 and min(ranges) != -1:
+            nav = 'back'
+        elif previous_nav == 'fwd':
+            if counter >= fwd_buffer or counter == 0:
+                nav = navigation.navigate(getRange('range1'), getRange('range2'), getRange('range3'))
+                counter = 0
+        elif counter >= action_buffer or counter == 0:
+            nav = navigation.navigate(getRange('range1'), getRange('range2'), getRange('range3'))
+            counter = 0
+        counter += 1
+        print(f'nav: {nav}')
+        # print(f'robot state: {robot_fsm.state}')
+        if nav != previous_nav:
             robot_fsm.neutralPos()
+        elif nav == 'fwd' :
+            robot_fsm.step(1)
+        elif nav == 'back':
+            robot_fsm.step(-1)
+        elif nav == 'left':
+            robot_fsm.turn('left')
+        elif nav == 'right':
+            robot_fsm.turn('right')
+        if robot_fsm.state == 'INIT':
+            previous_nav = nav
+        # else:
+        #     robot_fsm.neutralPos
+        
+        
+        # Keyboard Control
+        # if keyBoardControl == 'fwd':
+        #     robot_fsm.step(1)
+        # elif keyBoardControl == 'lft':
+        #     robot_fsm.turn("left")
+        # elif keyBoardControl == 'rgt':
+        #     robot_fsm.turn('right')
+        # elif keyBoardControl == 'bck':
+        #     robot_fsm.step(-1)
+        # elif keyBoardControl == 'nut':
+        #     robot_fsm.neutralPos()
 
         if cubeControl1 == 'cube_fwd':
             data.qpos[cube_qpos_addr1] += 0.001 
@@ -691,7 +731,7 @@ while not glfw.window_should_close(window):
         # # Step the MuJoCo simulation
         # robot_fsm.turn('left')
 
-        data.mocap_pos[0] = getCoM()
+        # data.mocap_pos[0] = getCoM()
         mj.mj_step(model, data)
         glfw.poll_events()
 

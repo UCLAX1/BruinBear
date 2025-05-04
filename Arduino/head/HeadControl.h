@@ -25,8 +25,8 @@ class HeadControl {
     const int tiltRight[2] = {60, 180};
 
     // Jaw positions
-    const int jawClosedPos = 0;
-    const int jawOpenPos = 60;
+    const int jawClosedPos = 60;
+    const int jawOpenPos = jawClosedPos + 60;
 
     // Servo pins
     const int SPIN_SERVO_PIN = 3;

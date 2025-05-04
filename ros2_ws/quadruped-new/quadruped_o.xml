@@ -47,9 +47,9 @@
                 <!-- Chassis -->
                 <geom name="Body-v4_geom" type="mesh" mesh="Body-v4" pos="0 0 0" euler="0 0 0"  />
                 <inertial mass="45.84029276864545" pos="-9.96787128906073e-17 -0.003343980902013922 1.4951806933591095e-16" fullinertia="1.4694385869918294 2.0400454550107257 0.5894668869416125 -6.244225368830321e-16 -7.310882210731513e-16 1.5985257043432564e-16" />
-                <site name="rangefinder_site1" pos="0 0 0.1" size="0.01"/>
-                <site name="rangefinder_site2" pos="0.15 0 0.1" size="0.01" euler="0 45 0"/>
-                <site name="rangefinder_site3" pos="-0.15 0 0.1" size="0.01" euler="0 -45 0"/>
+                <site name="rangefinder_site1" pos="0 0 0.3" size="0.01"/>
+                <site name="rangefinder_site2" pos="0 0 0.3" size="0.01" euler="0 0.606 0"/>
+                <site name="rangefinder_site3" pos="0 0 0.3" size="0.01" euler="0 -0.606 0"/>
                 
                 <!-- Front Left Leg -->
                 <body name="FL-Roll" pos="0.17032500000000006 -0.04349999999999993 0.3149999999999999" euler="-4.1171477459363345e-18 6.106970808913534e-16 -4.4235448637408593e-17">

@@ -40,6 +40,10 @@ void loop() {
     headServos.lookDown();
   } else if (time < 18) {
     headServos.centerHead();
+  } else if (time < 20) {
+    headServos.openJaw();
+  } else if (time < 22){
+    headServos.closeJaw();
   }
 
 }
