@@ -29,7 +29,7 @@ setup(
         'console_scripts': [
             'traj = controls.foot_traj_follower:main',
             'sim = controls.sim:main',
-            'fsm = controls.gait_publisher:main'
+            'fsm = controls.movement_controller:main'
         ],
     },
 )
