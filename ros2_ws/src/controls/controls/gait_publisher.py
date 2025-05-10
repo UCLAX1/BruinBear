@@ -147,7 +147,7 @@ def main(args=None):
          case "forward" | "f":
             gait = "f"
             #gaitNode.get_logger().info(f'inside forward: {"a"}')
-            if obstacle[1]!=-1 and obstacle[1] <= 50:
+            if obstacle[1]!=-1 and obstacle[1] <= 1:
                #gaitNode.get_logger().info(f'inside obstacle: {"a"}')
                state = "af"
                substate = "rnr"
