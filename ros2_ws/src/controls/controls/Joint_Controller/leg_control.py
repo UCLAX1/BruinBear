@@ -2,8 +2,12 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float32MultiArray
 import time
-from hip import Hip
-from knees import Knee
+try: 
+    from hip import Hip
+    from knee import Knee
+except ImportError: 
+    from controls.Joint_Controller.hip import Hip
+    from controls.Joint_Controller.knee import Knee 
 
 class JointPosSub(Node):
     """

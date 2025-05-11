@@ -1,4 +1,8 @@
-from HardwareInterface import CanBus, Motor
+try: 
+    from HardwareInterface import CanBus, Motor
+except ImportError:
+    from controls.Joint_Controller.HardwareInterface import CanBus, Motor
+    
 import time
 
 bus = CanBus()

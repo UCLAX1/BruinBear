@@ -17,5 +17,10 @@ def generate_launch_description():
             package='controls',
             executable='fsm',
             name='fsm'
+        ),
+        Node(
+            package='controls',
+            executable='legs',
+            name='legs'
         )
     ])

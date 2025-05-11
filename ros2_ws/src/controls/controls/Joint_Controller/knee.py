@@ -5,13 +5,15 @@ try:
 except ImportError:
     from controls.Joint_Controller.HardwareInterface import CanBus, Motor
 
-class Hip:
-    kp = 0.00001  # Proportional gain
+class Knee:
+    kp = -0.7  # Proportional gain
     ki = 0.0  # Integral gain
-    kd = 0.00000005  # Derivative gain
+    kd = 0.0000000  # Derivative gain
     dt = 0.01  # Time step for PID loop
-    TICKS_TO_RAD = 1#-1/2747548414
-    MAX_DEG = math.pi/4
+    TICKS_TO_RAD = -1/100000000
+    MIN_DEG = 0
+    MAX_DEG = 1
+    MAX_POWER = 0.3
     
     def __init__(self, motor_id : int, can_bus : CanBus, inverted=False, leg_id="leg"):
         self.motor = Motor(can_bus, motor_id)
@@ -24,8 +26,9 @@ class Hip:
         self.target_position = 0
             
     def set_target_position(self, target):
+        target = max(self.MIN_DEG, min(self.MAX_DEG, target))
         self.target_position = target
-    
+
     def get_current_position(self):
         return self.motor.get_pos() * self.TICKS_TO_RAD
     
@@ -43,16 +46,18 @@ class Hip:
         derivative = (error - self.previous_error) / self.dt
         
         # Compute motor power
-        self.motor_power = proportional + (self.ki * self.integral) + (self.kd * derivative)
+        power = proportional + (self.ki * self.integral) + (self.kd * derivative)
         
         # Update the previous error for the next iteration
         self.previous_error = error
         
         # Simulate motor output (replace with actual motor command)
-        self.apply_motor_power(self.motor_power)
+        self.apply_motor_power(power)
     
     def apply_motor_power(self, power):
-        self.motor.set_power(power)
+        self.motor_power = max(-self.MAX_POWER, min(self.MAX_POWER, power))
+        print ('setting power: ', self.motor_power)
+        self.motor.set_power(self.motor_power)
         self.motor.send_hearbeat()
     
     def __str__(self):

@@ -1,20 +1,25 @@
-from HardwareInterface import CanBus, Motor
-from hip import Hip
+try: 
+    from controls.Joint_Controller.HardwareInterface import CanBus, Motor
+    from controls.Joint_Controller.hip import Hip
+    from controls.Joint_Controller.knee import Knee
+except ImportError:
+    from HardwareInterface import CanBus, Motor
+    from hip import Hip
+    from knee import Knee
 import time
 
 bus = CanBus()
 bus.start()
 
-testHip = Hip(1, bus)
+testMotor = Knee(1, bus)
 
 time.sleep(2)
 
-testHip.set_target_position(100000)
-for i in range(50):
-    if i == 25:
-        testHip.set_target_position(0)
-    testHip.update_motor_power()
-    print(f"Motor position: {testHip.get_current_position()}")
+testMotor.set_target_position(0.5)
+# testMotor.apply_motor_power(0)
+while True:
+    testMotor.update_motor_power()
+    print(f"Motor position: {testMotor.get_current_position()}")
     time.sleep(0.1)
     
 bus.close()

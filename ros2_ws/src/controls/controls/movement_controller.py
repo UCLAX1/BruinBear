@@ -34,7 +34,6 @@ class gaitPublisher(Node):
     msg = String()
     msg.data = gait
     self.publisher_.publish(msg)
-    self.get_logger().info(f'Published gait: {msg.data}')
 
   def listener_callback(self, msg):
       global imu_position
@@ -79,12 +78,16 @@ def main(args=None):
  
         rclpy.spin_once(gaitNode, timeout_sec=0)
         #update_average(imu_position)
+        
+        gait = fsm.update(curr_time, obstacle)
 
-        if (cycle % 1000 == 0 ):
-            gaitNode.get_logger().info(f'Published obstacle: {obstacle}')
+        if (cycle % 10000 == 0 ):
+            gaitNode.get_logger().info(f'Recieved obstacle: {obstacle}')
+            gaitNode.get_logger().info(f'Publishing gait: {gait}')
         cycle += 1
         
-        gaitNode.pub_gait(fsm.update(curr_time, obstacle))
+        
+        gaitNode.pub_gait(gait)
 
   
 

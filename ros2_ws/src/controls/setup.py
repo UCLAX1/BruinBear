@@ -3,7 +3,7 @@ from glob import glob
 import sys
 
 package_name = 'controls'
-sys.path.insert(0, "/home/sara/venv/lib/python3.10/site-packages")
+# sys.path.insert(0, "/home/sara/venv/lib/python3.10/site-packages")
 
 
 setup(
@@ -29,7 +29,8 @@ setup(
         'console_scripts': [
             'traj = controls.foot_traj_follower:main',
             'sim = controls.sim:main',
-            'fsm = controls.movement_controller:main'
+            'fsm = controls.movement_controller:main',
+            'legs = controls.Joint_Controller.leg_test:main',
         ],
     },
 )
