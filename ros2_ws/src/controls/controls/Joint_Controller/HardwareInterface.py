@@ -1,12 +1,15 @@
 import struct
 import can
+import os
+import json
+import time
 
 class ProcessEncoderData(can.Listener):
     STATUS_2 = 0x2051880
     
     def __init__(self, motor_pos):
         self.motor_pos = motor_pos
-        self.motor_init_pos = [None] * 30
+        # self.motor_init_pos = [None] * 30
         
     def on_message_received(self, msg):
         if msg.arbitration_id & 0xFFFFFFFF0 == self.STATUS_2: #only get status frame 2
@@ -14,10 +17,10 @@ class ProcessEncoderData(can.Listener):
             position_int = int.from_bytes(raw_position_bytes, byteorder='little', signed=False)
             motorId = msg.arbitration_id & 0xF
             
-            if self.motor_init_pos[motorId] is None: #resets motor position on the first read
-                self.motor_init_pos[motorId] = position_int
+            # if self.motor_init_pos[motorId] is None: #resets motor position on the first read
+            #     self.motor_init_pos[motorId] = position_int
             
-            self.motor_pos[motorId] = position_int - self.motor_init_pos[motorId]
+            self.motor_pos[motorId] = position_int #- self.motor_init_pos[motorId]
             return
     
 class CanBus:
@@ -62,10 +65,18 @@ class Motor:
     Duty_Cycle_ID = 0x2050080
     Heartbeat_ID = 0x2052480
     MAX_DUTY_CYCLE = 0.5 # safe threshold for now
+    INIT_POS_FILE = "motor_init_pos.json"
     
     def __init__(self, can_bus: CanBus, motor_id: int):
         self.can_bus = can_bus
         self.motor_id = motor_id
+        
+        # load initial pos
+        self.init_pos = 0
+        if os.path.exists(self.INIT_POS_FILE):
+            with open(self.INIT_POS_FILE, "r") as f:
+                data = json.load(f)
+                self.init_pos = data.get(str(self.motor_id), 0)
     
     def set_power(self, power: float):
         msg_id = self.Duty_Cycle_ID + self.motor_id
@@ -79,14 +90,38 @@ class Motor:
         
         self.can_bus.send_message(msg_id, data)
         
-    def send_hearbeat(self):
+    def send_heartbeat(self):
         msg_id = self.Heartbeat_ID + self.motor_id
         heartbeat_data = [0xFF] * 8
         
         self.can_bus.send_message(msg_id, heartbeat_data)
         
     def get_pos(self):
-        return self.can_bus.motor_pos[self.motor_id]
+        return self.can_bus.motor_pos[self.motor_id] - self.init_pos
+    
+    def reset_encoder(self):
+        max_wait = 2.0  # seconds
+        start = time.time()
+
+        while self.can_bus.motor_pos[self.motor_id] == 0:
+            if time.time() - start > max_wait:
+                print(f"WARNING: Timeout waiting for motor {self.motor_id} position update.")
+                return
+            time.sleep(0.05)
+
+        pos = self.can_bus.motor_pos[self.motor_id]
+        self.init_pos = pos
+            
+        # update json file
+        data = {}
+        if os.path.exists(self.INIT_POS_FILE):
+            with open(self.INIT_POS_FILE, "r") as f:
+                data = json.load(f)
+
+        data[str(self.motor_id)] = pos
+
+        with open(self.INIT_POS_FILE, "w") as f:
+            json.dump(data, f, indent=2)
         
 
         
