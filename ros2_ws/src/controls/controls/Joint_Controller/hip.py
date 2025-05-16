@@ -6,12 +6,12 @@ except ImportError:
     from controls.Joint_Controller.HardwareInterface import CanBus, Motor
 
 class Hip:
-    kp = 0.00000001  # Proportional gain
+    kp = 0.1  # Proportional gain
     ki = 0.0  # Integral gain
-    kd = 0.0000000  # Derivative gain
+    kd = 0.00  # Derivative gain
     dt = 0.01  # Time step for PID loop
-    MIN_TICKS = 0
-    MAX_TICKS = 1000000
+    MIN_TICKS = -7
+    MAX_TICKS = 3
     MAX_POWER = 0.3
     
     def __init__(self, motor_id : int, can_bus : CanBus, inverted=False, leg_id="leg"):
@@ -28,12 +28,12 @@ class Hip:
         self.target_position = 0
             
     def set_target_ticks(self, target):
-        target = max(self.MIN_TICKS, min(self.MIN_TICKS, target))
+        target = max(self.MIN_TICKS, min(self.MAX_TICKS, target))
         self.target_position = target
         
     def set_target_rad(self, target):
         x = target
-        ticks = ((-10000000) * x) * (-1 if self.inverted else 1)
+        ticks = ((-15.279) * x) * (-1 if self.inverted else 1)
         self.set_target_ticks(ticks)
 
     def get_current_ticks(self):
@@ -46,6 +46,8 @@ class Hip:
         
         # Calculate the error
         error = self.target_position - self.current_position
+        
+        print ("target", self.target_position)
         
         # PID calculations
         proportional = self.kp * error

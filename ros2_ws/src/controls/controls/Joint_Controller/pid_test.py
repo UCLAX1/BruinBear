@@ -11,15 +11,18 @@ import time
 bus = CanBus()
 bus.start()
 
-testMotor = Knee(1, bus)
+testMotorK = Knee(1, bus)
+testMotorH = Hip(2, bus)
 
 time.sleep(2)
 
-testMotor.set_target_position(0.5)
-# testMotor.apply_motor_power(0)
+testMotorK.set_target_ticks(0)
+testMotorH.set_target_ticks(0)
 while True:
-    testMotor.update_motor_power()
-    print(f"Motor position: {testMotor.get_current_position()}")
-    time.sleep(0.1)
+    # testMotorK.update_motor_power()
+    # testMotorH.update_motor_power()
+    print(f"Motor position Knee: {testMotorK.get_current_ticks()}")
+    print(f"Motor position Hip: {testMotorH.get_current_ticks()}")
+    time.sleep(0.2)
     
 bus.close()

@@ -14,13 +14,13 @@ class ProcessEncoderData(can.Listener):
     def on_message_received(self, msg):
         if msg.arbitration_id & 0xFFFFFFFF0 == self.STATUS_2: #only get status frame 2
             raw_position_bytes = msg.data[0:4]
-            position_int = int.from_bytes(raw_position_bytes, byteorder='little', signed=False)
+            position_float = struct.unpack('<f', raw_position_bytes)[0]            
             motorId = msg.arbitration_id & 0xF
             
             # if self.motor_init_pos[motorId] is None: #resets motor position on the first read
             #     self.motor_init_pos[motorId] = position_int
             
-            self.motor_pos[motorId] = position_int #- self.motor_init_pos[motorId]
+            self.motor_pos[motorId] = position_float #- self.motor_init_pos[motorId]
             return
     
 class CanBus:
@@ -29,7 +29,7 @@ class CanBus:
     def __init__(self):
         self.notifier = None
         self.bus = None
-        self.motor_pos = [0] * 30
+        self.motor_pos = [0.0] * 30
 
     def start(self):
         try:
@@ -100,7 +100,7 @@ class Motor:
         return self.can_bus.motor_pos[self.motor_id] - self.init_pos
     
     def reset_encoder(self):
-        max_wait = 2.0  # seconds
+        max_wait = 10.0  # seconds
         start = time.time()
 
         while self.can_bus.motor_pos[self.motor_id] == 0:
@@ -108,9 +108,11 @@ class Motor:
                 print(f"WARNING: Timeout waiting for motor {self.motor_id} position update.")
                 return
             time.sleep(0.05)
-
+            
         pos = self.can_bus.motor_pos[self.motor_id]
         self.init_pos = pos
+        
+        print("reseting encoders to", pos)
             
         # update json file
         data = {}
