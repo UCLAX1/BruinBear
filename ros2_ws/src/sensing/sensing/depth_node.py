@@ -12,8 +12,7 @@ class DepthListenerNode(Node):
 
         # Add frame counter and interval parameters
         self.frame_count = 0
-        self.frame_interval = 30  # Process every 30th frame
-        
+        self.frame_interval = 1  # Process every 30th frame
         # Create a subscriber for the depth topic
         self.subscription = self.create_subscription(
             Image,               # Message type
@@ -28,7 +27,7 @@ class DepthListenerNode(Node):
         self.bridge = CvBridge()
         self.publisher_ = self.create_publisher(Float32MultiArray,'position_data', 10)
 
-        self.timer = self.create_timer(5, self.depth_image_callback())
+        # self.timer = self.create_subscri(0.5, self.depth_image_callback)
        
 
     def depth_image_callback(self, msg):
@@ -80,7 +79,7 @@ class DepthListenerNode(Node):
         kernel_height = h//ratio
         kernel = np.ones((kernel_width, kernel_height), np.float32)/(kernel_width * kernel_height)
         blurred_image = cv2.filter2D(depth_image,-1,kernel)
-        cv2.imwrite('convolved_image.png', blurred_image)
+        # cv2.imwrite('convolved_image.png', blurred_image)
         return blurred_image
 
     def get_position_distance_of_obstacle(self,depth_image, grid_size):
@@ -109,6 +108,7 @@ class DepthListenerNode(Node):
     def publish_direction_msg(self, depth_image, grid_size=[12, 12], distance_threshold=500):
         position, distance = self.get_position_distance_of_obstacle(depth_image, grid_size)
         lmr_position = int(position[0] // (grid_size[0]/3))
+        print(lmr_position)
         output_value = [float(-1.0), float(-1.0), float(-1.0)]
 
         if(distance < distance_threshold):
@@ -140,7 +140,7 @@ class DepthListenerNode(Node):
         msg.data = output_value
         
         self.publisher_.publish(msg)
-        print("Publishing Data")
+        # print("Publishing Data")
         #return output_msg #returns ros Vector3 message for publisher
 
 
