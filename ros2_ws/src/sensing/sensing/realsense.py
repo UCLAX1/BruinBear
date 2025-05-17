@@ -154,8 +154,8 @@ def determine_movement(min_value_distance, min_value_position):
     threshold_distance = 1
     if(min_value_distance < threshold_distance):
         twist_msg = Twist()
-    self.publisher.publish(twist_msg)
-        return 
+        self.publisher.publish(twist_msg)
+    return 
 
 def read_in_image(file_path):
     #mg = cv2.imread('/Users/sara/Pictures/10-10-6k.jpg')
