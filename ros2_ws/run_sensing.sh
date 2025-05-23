@@ -7,7 +7,8 @@ colcon build --symlink-install
 source install/local_setup.bash
 
 # Run first package
-ros2 launch realsense2_camera rs_launch.py enable_accel:=true enable_gyro:=true unite_imu_method:=2 &
+# CHANGE CONFIG FILE PATH FOR YOUR MACHINE
+ros2 launch realsense2_camera rs_launch.py config_file:=/home/sara/Documents/BruinBear/ros2_ws/realsense_params.yaml &
 
 # Run the second package in the background
 ros2 run sensing depth &

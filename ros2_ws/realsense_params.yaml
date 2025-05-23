@@ -1,0 +1,15 @@
+camera:
+  ros__parameters:
+    # # IMU Setup
+    # enable_accel: true 
+    # enable_gyro: true 
+    # unite_imu_method: 2
+
+    # Filters
+    filters: "pointcloud,spatial,temporal,hole_filling"
+    pointcloud.enable: true
+    spatial_filter.enable: true
+    temporal_filter.enable: true
+    hole_filling_filter.enable: true
+    align_depth:
+      enable: true
