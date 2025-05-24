@@ -42,8 +42,8 @@ class DepthListenerNode(Node):
             self.display_depth_image(depth_image)
        
             #return depth_image_meters
-            self.publish_direction_msg(depth_image)
-            ##### RUN ANY FOLLOWUP FUNCTIONS INSIDE OF THE CALLBACK #####
+            # self.publish_direction_msg(depth_image)
+            self.publish_cell_data_msg(depth_image)
         except Exception as e:
             self.get_logger().error(f"Error converting ROS Image to OpenCV: {e}")
 
@@ -103,7 +103,29 @@ class DepthListenerNode(Node):
         unraveled_y_position = min_value_position % grid_size[1]
         unraveled_min_value_position = np.array([unraveled_x_position, unraveled_y_position])
         print(unraveled_min_value_position.shape)
+
         return unraveled_min_value_position, min_value_distance
+    
+    def get_cell_data(self, depth_image, grid_size):
+        h, w = depth_image.shape
+        blurred_depth_image = self.blur_depth_image(depth_image, h, w)
+        cell_h, cell_w = h // grid_size[0], w // grid_size[1]
+        blurred_depth_image_averages = np.zeros(grid_size)
+
+        for i in range(grid_size[0]):
+            for j in range(grid_size[1]):
+                cell = blurred_depth_image[(i) * cell_h: (i + 1) * cell_h, (j) * cell_w: (j + 1) * cell_w]
+                cell_average = np.mean(cell)
+                blurred_depth_image_averages[i, j] = cell_average
+
+        min_value_position = np.argmin(blurred_depth_image_averages)
+        min_value_distance = np.min(blurred_depth_image_averages)
+        #unravaled_max_value_position = np.unravel_index(max_value_position, np.array(grid_size).shape)
+        unraveled_x_position = min_value_position // grid_size[0]
+        unraveled_y_position = min_value_position % grid_size[1]
+        unraveled_min_value_position = np.array([unraveled_x_position, unraveled_y_position])
+
+        return blurred_depth_image_averages
 
     def publish_direction_msg(self, depth_image, grid_size=[12, 12], distance_threshold=500):
         position, distance = self.get_position_distance_of_obstacle(depth_image, grid_size)
@@ -139,9 +161,48 @@ class DepthListenerNode(Node):
         # Populate the data (flattened row-major order)
         msg.data = output_value
         
+
+
         self.publisher_.publish(msg)
         # print("Publishing Data")
         #return output_msg #returns ros Vector3 message for publisher
+
+    def publish_cell_data_msg(self, depth_image, grid_size = [12,12]):
+        # positions = self.get_cell_data(depth_image, grid_size)
+
+        # print(positions)
+        # print(positions.shape)
+
+        positions = self.get_cell_data(depth_image, grid_size)  
+
+        msg = Float32MultiArray()
+        msg.data = positions.astype(np.float32).flatten().tolist()  # row-major
+
+
+        # print(grid_size)
+        # Add layout info
+        dim0 = MultiArrayDimension()
+        dim0.label = "rows"
+        dim0.size = grid_size[0]
+        dim0.stride = grid_size[1] * grid_size[0]
+
+        dim1 = MultiArrayDimension()
+        dim1.label = "cols"
+        dim1.size = grid_size[1]
+        dim1.stride = grid_size[0]
+
+        layout = MultiArrayLayout()
+        layout.dim = [dim0, dim1]
+        layout.data_offset = 0
+        msg.layout = layout
+
+        # msg.layout.dim = [dim0, dim1]
+
+        print("Sending shape:", positions.shape)
+        print("Flattened data:", msg.data[:5], "...")  # preview
+        print("Layout:", [(d.label, d.size, d.stride) for d in msg.layout.dim])
+
+        self.publisher_.publish(msg)
 
 
     def read_in_image(self, file_path):
