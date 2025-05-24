@@ -8,7 +8,7 @@ source install/local_setup.bash
 
 # Run first package
 # CHANGE CONFIG FILE PATH FOR YOUR MACHINE
-ros2 launch realsense2_camera rs_launch.py config_file:=/home/sara/Documents/BruinBear/ros2_ws/realsense_params.yaml &
+ros2 launch realsense2_camera rs_launch.py config_file:=realsense_params.yaml &
 
 # Run the second package in the background
 ros2 run sensing depth &
