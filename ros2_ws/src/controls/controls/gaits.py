@@ -9,6 +9,14 @@ from std_msgs.msg import Float32MultiArray, String
 import time
 from roboticstoolbox import mstraj
 import math
+import scipy
+
+
+# Patch scipy.randn if missing
+if not hasattr(scipy, 'randn'):
+    scipy.randn = np.random.randn
+
+from roboticstoolbox import mstraj
 
 class Gait:
     def __init__(self, logger = None):
