@@ -380,9 +380,9 @@ def main(args=None):
     cam.elevation = -35 # Adjust the elevation if necessary
     # Update scene and render
 
-    simNode.get_logger().info(f'Published imu data: {data.qpos}')
-    simNode.get_logger().info(f'Published imu data: {data.qpos[cube_qpos_addr2]}')
-    simNode.get_logger().info(f'Published imu data: {cube_qpos_addr2}')
+    # simNode.get_logger().info(f'Published imu data: {data.qpos}')
+    # simNode.get_logger().info(f'Published imu data: {data.qpos[cube_qpos_addr2]}')
+    # simNode.get_logger().info(f'Published imu data: {cube_qpos_addr2}')
 
     while not glfw.window_should_close(window):
         time_prev = data.time

@@ -5,13 +5,13 @@ try:
 except ImportError:
     from controls.Joint_Controller.HardwareInterface import CanBus, Motor
 
-class Hip:
-    kp = 0.1  # Proportional gain
+class Roll:
+    kp = 0.7  # Proportional gain
     ki = 0.0  # Integral gain
     kd = 0.00  # Derivative gain
     dt = 0.01  # Time step for PID loop
-    MIN_TICKS = 0
-    MAX_TICKS = 5
+    MIN_TICKS = -1
+    MAX_TICKS = 1
     MAX_POWER = 0.3
     
     def __init__(self, motor_id : int, can_bus : CanBus, inverted=False, leg_id="leg"):
@@ -34,7 +34,7 @@ class Hip:
     def set_target_rad(self, target):
         #x = target
         #ticks = ((-15.279) * x) * (-1 if self.inverted else 1)
-        ticks = -7.64 * target
+        ticks = 1.274 * target
         self.set_target_ticks(ticks)
         return ticks
 
@@ -75,6 +75,6 @@ class Hip:
         self.motor.reset_encoder()
     
     def __str__(self):
-        """Return a string representation of the hip state."""
-        return (f"Hip[{self.leg_id}]: Position={self.current_position:.2f}, "
+        """Return a string representation of the roll state."""
+        return (f"Roll[{self.leg_id}]: Position={self.current_position:.2f}, "
                 f"Target={self.target_position}, Power={self.motor_power:.2f}")

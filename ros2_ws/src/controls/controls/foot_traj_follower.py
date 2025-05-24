@@ -46,13 +46,12 @@ class JointPosPublisher(Node):
       msg = Float32MultiArray()
       msg.data = joint_positions
       self.publisher_.publish(msg)
-      #self.get_logger().info(f'received gait: {msg.data}')
+      #self.get_logger().info(f'published pos: {msg.data}')
    
    def listener_callback(self, msg):
       global gait
       gait = msg.data
-      #self.get_logger().info(f'received gait: {msg.data}')
-
+      # self.get_logger().info(f'received gait: {msg.data}')
 
 
 

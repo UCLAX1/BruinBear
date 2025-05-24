@@ -34,7 +34,7 @@ class gaitPublisher(Node):
     msg = String()
     msg.data = gait
     self.publisher_.publish(msg)
-    self.get_logger().info(f'Published gait: {msg.data}')
+   #  self.get_logger().info(f'Published gait: {msg.data}')
 
   def listener_callback(self, msg):
       global imu_position
@@ -58,8 +58,8 @@ def update_average(new_value):
     global cycle
     recent_values.append(np.array(new_value))  # ensure array type
     average_position = list(np.mean(recent_values, axis=0))
-    if cycle%5000==0:
-      gaitNode.get_logger().info(f'compare: {average_position[3]}')
+   #  if cycle%5000==0:
+   #    gaitNode.get_logger().info(f'compare: {average_position[3]}')
     cycle+=1
 
 
@@ -89,7 +89,7 @@ def turn_n_deg(n):
    #gaitNode.get_logger().info(f'compare: {imu_position[3],startPos[3]}')
    delta = angle_difference(startPos[3], imu_position[3])
    if abs(abs(delta))>=n:
-      gaitNode.get_logger().info(f'compare: {imu_position[3],startPos[3],delta}')
+      # gaitNode.get_logger().info(f'compare: {imu_position[3],startPos[3],delta}')
       return True
    return False
 
@@ -138,8 +138,8 @@ def main(args=None):
         rclpy.spin_once(gaitNode, timeout_sec=0)
         #update_average(imu_position)
 
-        if (cycle % 1000 == 0 ):
-            gaitNode.get_logger().info(f'Published obstacle: {obstacle}')
+      #   if (cycle % 1000 == 0 ):
+      #       gaitNode.get_logger().info(f'Published obstacle: {obstacle}')
         cycle += 1
         
 
