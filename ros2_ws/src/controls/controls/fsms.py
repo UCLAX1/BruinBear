@@ -25,8 +25,8 @@ class PingPong(FSM):
     def __init__(self, logger = None):
         super().__init__(logger)
         
-    def update(self, curr_time, obstacles):
-        range2, range1, range3 = obstacles
+    def update(self, curr_time, cell_data, actions):
+        range2, range1, range3 = cell_data
 
         if self.previousAction == 'back':
             self.action =  self.actions[np.random.randint(0,1)]

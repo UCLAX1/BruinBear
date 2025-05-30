@@ -25,8 +25,15 @@ class gaitPublisher(Node):
          'rangefinder_data', 
          self.listener_callback_obstacle, 
          10
-    )
-    self.subscription
+         )
+
+    self.subscription = self.create_subscription(
+       Float32MultiArray,
+       'postion_data',
+       self.listener_callback_cell_data,
+       10
+       )
+    # self.subscription
     #timer_period = 1
     #self.timer = self.create_timer(timer_period, self.pub_gait)
       
@@ -43,6 +50,10 @@ class gaitPublisher(Node):
      global obstacle
      obstacle = msg.data
      #self.get_logger().info(f'obstacle: {msg.data}')
+  def listener_callback_cell_data(self,msg):
+     global celldata
+     celldata = msg.data
+     
 
 global average_position
 average_position = []
@@ -70,6 +81,7 @@ def main(args=None):
     global cycle
     cycle = 0
     
+    global celldata
     global fsm 
     fsm = fsms.FSM()
 
@@ -83,7 +95,9 @@ def main(args=None):
 
         if (cycle % 10000 == 0 ):
             gaitNode.get_logger().info(f'Recieved obstacle: {obstacle}')
+            gaitNode.get_logger().info(f"Recieved Cell Data:  {celldata}")
             gaitNode.get_logger().info(f'Publishing gait: {gait}')
+
         cycle += 1
         
         
