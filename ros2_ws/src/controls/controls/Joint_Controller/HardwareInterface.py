@@ -29,7 +29,7 @@ class CanBus:
     def __init__(self):
         self.notifier = None
         self.bus = None
-        self.motor_pos = [0.0] * 30
+        self.motor_pos = [None] * 30
 
     def start(self):
         try:
@@ -67,9 +67,10 @@ class Motor:
     MAX_DUTY_CYCLE = 0.5 # safe threshold for now
     INIT_POS_FILE = "motor_init_pos.json"
     
-    def __init__(self, can_bus: CanBus, motor_id: int):
+    def __init__(self, can_bus: CanBus, motor_id: int, logger = None):
         self.can_bus = can_bus
         self.motor_id = motor_id
+        self.logger = logger
         
         # load initial pos
         self.init_pos = 0
@@ -77,7 +78,27 @@ class Motor:
             with open(self.INIT_POS_FILE, "r") as f:
                 data = json.load(f)
                 self.init_pos = data.get(str(self.motor_id), 0)
-    
+        
+        # wait to get a motor position to ensure motor is connected via CAN
+        self.log(f"waiting for motor {self.motor_id}")
+        max_wait = 3
+        start = time.time()
+        while not self.can_bus.motor_pos[self.motor_id]:
+            if time.time() - start > max_wait:
+                self.log(f"WARNING: Timeout waiting for motor {self.motor_id} position.")
+                raise Exception("Motor not connected")
+            time.sleep(0.05)
+            return
+        
+        self.log(f"motor connected {self.motor_id}")
+        self.log(f"current motor position {self.get_pos()}")
+
+    def log(self, msg):
+        if self.logger:
+            self.logger.info(str(msg))
+        else:
+            print(str(msg))
+        
     def set_power(self, power: float):
         msg_id = self.Duty_Cycle_ID + self.motor_id
         
@@ -100,19 +121,10 @@ class Motor:
         return self.can_bus.motor_pos[self.motor_id] - self.init_pos
     
     def reset_encoder(self):
-        max_wait = 10.0  # seconds
-        start = time.time()
-
-        while self.can_bus.motor_pos[self.motor_id] == 0:
-            if time.time() - start > max_wait:
-                print(f"WARNING: Timeout waiting for motor {self.motor_id} position update.")
-                return
-            time.sleep(0.05)
-            
         pos = self.can_bus.motor_pos[self.motor_id]
         self.init_pos = pos
         
-        print("reseting encoders to", pos)
+        self.log(f"reseting encoders to {pos}")
             
         # update json file
         data = {}

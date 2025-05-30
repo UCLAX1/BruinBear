@@ -6,9 +6,9 @@ except ImportError:
     from controls.Joint_Controller.HardwareInterface import CanBus, Motor
 
 class Knee:
-    kp = 0.7  # Proportional gain
+    kp = 0.2  # Proportional gain
     ki = 0.0  # Integral gain
-    kd = 0.00  # Derivative gain
+    kd = 0.0  # Derivative gain
     dt = 0.01  # Time step for PID loop
     MIN_TICKS = -9
     MAX_TICKS = 0
@@ -23,7 +23,6 @@ class Knee:
         # PID variables
         self.previous_error = 0
         self.integral = 0
-        
         self.motor_power = 0
         self.target_position = 0
             
@@ -32,11 +31,13 @@ class Knee:
         self.target_position = target
         
     def set_target_rad(self, target):
-        y = target
-        x = 180*y/math.pi 
-        ticks = ((-2.29)*x -3)
-        11.08 * x - 24.687
+        #y = target
+        #x = 180*y/math.pi 
+        #ticks = ((-2.29)*x -1)
+        ticks = (-11.45 * target ) + 9
+        # 11.08 * x - 24.687
         self.set_target_ticks(ticks)
+        return ticks
 
     def get_current_ticks(self):
         return self.motor.get_pos()
