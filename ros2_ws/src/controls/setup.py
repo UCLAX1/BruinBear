@@ -29,8 +29,9 @@ setup(
         'console_scripts': [
             'traj = controls.foot_traj_follower:main',
             'sim = controls.sim:main',
-            'fsm = controls.movement_controller:main',
-            'legs = controls.Joint_Controller.leg_test:main',
+            # 'fsm = controls.movement_controller:main',
+            # 'legs = controls.Joint_Controller.leg_test:main',
+            'movement_controller = controls.movement_controller:main'
         ],
     },
 )

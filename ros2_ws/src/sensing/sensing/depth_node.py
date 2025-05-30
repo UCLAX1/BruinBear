@@ -12,7 +12,7 @@ class DepthListenerNode(Node):
 
         # Add frame counter and interval parameters
         self.frame_count = 0
-        self.frame_interval = 1  # Process every 30th frame
+        self.frame_interval = 1 
         # Create a subscriber for the depth topic
         self.subscription = self.create_subscription(
             Image,               # Message type
@@ -40,6 +40,7 @@ class DepthListenerNode(Node):
             depth_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='passthrough')        
             # Display depth image
             self.display_depth_image(depth_image)
+            # self.publish_cell_data_msg(depth_image)
        
             #return depth_image_meters
             # self.publish_direction_msg(depth_image)
@@ -198,9 +199,9 @@ class DepthListenerNode(Node):
 
         # msg.layout.dim = [dim0, dim1]
 
-        print("Sending shape:", positions.shape)
-        print("Flattened data:", msg.data[:5], "...")  # preview
-        print("Layout:", [(d.label, d.size, d.stride) for d in msg.layout.dim])
+        # print("Sending shape:", positions.shape)
+        # print("Flattened data:", msg.data[:5], "...")  # preview
+        # print("Layout:", [(d.label, d.size, d.stride) for d in msg.layout.dim])
 
         self.publisher_.publish(msg)
 
