@@ -19,7 +19,7 @@ class FSM():
     
 
 
-class StraighLine(FSM):
+class StraightLine(FSM):
     def __init__(self, logger = None):
         super().__init__(logger)
         
@@ -27,37 +27,49 @@ class StraighLine(FSM):
         return "forward"
 
 class PingPong(FSM):
-    previousAction = 'neutral'
+    void_range = 10
+    mid_range = 1
+    emergency_range = 0.3
+    close_range = 0.5
+    far_range = 5
+    
+    previousAction = 's'
     actions = ['lwr','rwr']
-    state = 'none'
+    action = ''
+    # state = 'none'
     def __init__(self, logger = None):
         super().__init__(logger)
         
     def update(self, cell_data):
-        global previousAction
-        self.log(f"Cell Data length" + str(len(cell_data)))
-        range2, range1, range3 = cell_data[13], cell_data[19], cell_data[25]
-        range2 /= 1000
-        range1 /= 1000
-        range3 /= 1000
+        # self.log(f"Cell Data length" + str(len(cell_data)))
+        left_range, middle_range, right_range = cell_data[1], cell_data[19], cell_data[24]
+        left_range /= 1000
+        middle_range /= 1000
+        right_range /= 1000
+        self.log(f"Range Middle {str(middle_range)}")
+        self.log(f'Range Left {str(left_range)}')
+        self.log(f'Range Right: {str(right_range)}')
         
         if self.previousAction == 'b':
-            self.action =  self.actions[np.random.randint(0,1)]
-        elif range2 < 1 and range3 < 1 and (range1 > 1 or range1 < 0):
-            self.action = 'f'
-        elif (range2 < 1 and range2 != 0) or (range2 < 1 and range1 < 1 and range2 != 0 and range1 != 0):
-            self.action = 'rwr'
-        elif (range3 < 1 and range3 != 0) or (range3 < 1 and range1 < 1 and range3 != 0 and range1 != 0):
-            self.action = 'lwr'
-        elif range1 < 0.3 and range1 > 0:
+            self.action = self.actions[np.random.randint(0,2)]
+        elif middle_range > self.void_range or left_range > self.void_range or right_range > self.void_range:
+            self.action = 'b'
+        elif middle_range < self.emergency_range and middle_range > 0:
             # print('back hit')
             self.action = 'b'
-        elif range2 < 1 and range3 < 1 and range2 > 0 and range3 > 0:
-            action = 'b'
-        elif range1 > 0.5 and range1 > 0:
-            action = 'f'
+        elif (left_range < self.mid_range and right_range < self.mid_range and left_range > 0 and right_range > 0) or (middle_range > self.void_range and left_range > self.void_range and right_range > self.void_range):
+            self.action = 'b'
+        elif middle_range > self.close_range and middle_range > 0:
+            self.action = 'f'
+        elif left_range < self.mid_range and right_range < self.mid_range and (middle_range > self.mid_range or middle_range < 0):
+            self.action = 'f'
+        elif (left_range < self.mid_range and left_range != 0 and left_range < self.far_range) or (left_range < self.mid_range and middle_range < self.mid_range and left_range != 0 and middle_range != 0):
+            self.action = 'rwr'
+        elif (right_range < self.mid_range and right_range != 0 and right_range < self.far_range) or (right_range < self.mid_range and middle_range < self.mid_range and right_range != 0 and middle_range != 0):
+            self.action = 'lwr'
         else:
-            action = 'b'
+            self.action = 'b'
+      
         # else:
         #     if state == 'random':
         #         action = self.previousAction
@@ -67,9 +79,9 @@ class PingPong(FSM):
         #     pass
         #     state = 'random'
 
-        previousAction = action
+        self.previousAction = self.action
 
-        return action
+        return self.action  
         # return "forward"
     
 

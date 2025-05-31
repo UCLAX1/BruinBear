@@ -7,42 +7,51 @@ import numpy as np
 from scipy.spatial.transform import Rotation as R
 import math
 from collections import deque
-global gait_origin, gait
+global gait_origin
+global gait 
+gait = 's'
 global celldata
+global cycle_time
+cycle_time = 10
+global previous_action
 celldata = []
 import controls.fsms as fsms
 
 class gaitPublisher(Node):
   def __init__(self):
     super().__init__('gait_pub')
+    self.get_logger().info("Initializing gaitPublisher node")
     self.publisher_ = self.create_publisher(String, 'gait_control', 10)
-    self.subscription = self.create_subscription(
+    self.imu_sub = self.create_subscription(
          Float32MultiArray,
          'imu_data', 
          self.listener_callback, 
          10
          )
-    self.subscription = self.create_subscription(
+    self.range_sub = self.create_subscription(
        Float32MultiArray,
          'rangefinder_data', 
          self.listener_callback_obstacle, 
          10
          )
 
-    self.subscription = self.create_subscription(
+    self.cam_sub = self.create_subscription(
        Float32MultiArray,
-       'postion_data',
+       '/position_data',
        self.listener_callback_cell_data,
        10
        )
+    self.cycle = 0
+    self.ping_pong = fsms.PingPong(logger=self.get_logger())
     
     # self.subscription
     #timer_period = 1
     #self.timer = self.create_timer(timer_period, self.pub_gait)
       
-  def pub_gait(self, gait):
+  def pub_gait(self, message):
     msg = String()
-    msg.data = gait
+    msg.data = message
+    self.get_logger().info(f'Publishing gait: {message}')
     self.publisher_.publish(msg)
 
   def listener_callback(self, msg):
@@ -55,8 +64,32 @@ class gaitPublisher(Node):
      #self.get_logger().info(f'obstacle: {msg.data}')
   def listener_callback_cell_data(self,msg):
     #  print(msg.data)
-     global celldata
-     celldata = msg.data
+    global celldata, cycle_time, gait
+    celldata = msg.data
+
+    # self.get_logger().info(f'Cycle Numer: {self.cycle}')
+    # self.get_logger().info(f'Received celldata: {celldata}')
+
+    # ping_pong = fsms.PingPong(logger=self.get_logger())
+
+    if self.ping_pong.previousAction == 'f':
+      cycle_time = 10
+    elif self.ping_pong.previousAction == 'b':
+      cycle_time = 50
+    elif self.ping_pong.previousAction == "lwr" or self.ping_pong.previousAction == "rwr":
+      cycle_time = 20
+      
+    if self.cycle % cycle_time == 0: 
+      # gaitNode.get_logger().info(f'Before ping_pong.update. Current celldata: {celldata}')
+      print()
+      self.get_logger().info(f'Update Cycle Happened: {self.cycle}')
+
+      gait = self.ping_pong.update(celldata)
+      # gaitNode.get_logger().info(f'After ping_pong.update. New gait: {gait}')
+    
+    self.cycle += 1
+    # self.get_logger().info(f'Publishing gait: {gait}')
+    self.pub_gait(gait)
      
 
 global average_position
@@ -64,66 +97,17 @@ average_position = []
 
 def main():
     rclpy.init()
-    global gaitNode
+    # global gaitNode
     gaitNode = gaitPublisher()
+
+    try:
+      rclpy.spin(gaitNode)  
+      pass
+    finally:
+      rclpy.shutdown()
+      pass
     
-    
-    global startTime
-    startTime = time.time()
-    global average_position
-    global obstacle
-
-    gait_origin = ""
-    gait = "s"
-    startTime = time.time()
-
-    gaitNode.pub_gait(gait) #to wait for ros communication to get ready
-    # time.sleep(3)
-
-    state = "f"
-    flag = True
-    global cycle
-    cycle = 0
-    
-    global celldata
-    global fsm 
-    # fsm = fsms.FSM()
-    gaitNode.get_logger().info(str(len(celldata)))
-    ping_pong = fsms.PingPong(logger=gaitNode.get_logger())
-    # fsm.update()
-
-    cycle_time = 200
-    while True:
-      # print(celldata)
-      # print('loop happened')
-      #curr_time = time.time()-startTime
-      # print(case)
-      rclpy.spin_once(gaitNode, timeout_sec=0)
-      #update_average(imu_position)
-
-      # print(len(celldata))
-      #print(len(celldata[0]))
-      
-      # gait = fsm.update(curr_time, obstacle)
-      if ping_pong.previousAction == 'f' or ping_pong.previousAction == 'b':
-        cycle_time = 500
-      elif ping_pong.previousAction == "lwr" or ping_pong.previousAction == "rwr":
-        cycle_time = 2000
-        
-      if cycle % cycle_time == 0: 
-        gait = ping_pong.update(celldata)
-
-      # if (cycle % 10000 == 0 ):
-      #     gaitNode.get_logger().info(f'Recieved obstacle: {obstacle}')
-      #     gaitNode.get_logger().info(f"Recieved Cell Data:  {celldata}")
-      #     gaitNode.get_logger().info(f'Publishing gait: {gait}')
-      
-      cycle += 1
-      
-      
-      gaitNode.pub_gait(gait)
-      time.sleep(0.001)
-
+  
   
 
 # Run the main function

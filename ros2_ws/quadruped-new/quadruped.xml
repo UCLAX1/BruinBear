@@ -137,26 +137,26 @@
          <!-- motors -->
     <actuator>
         <!-- Front Right -->
-        <position name="FR-H-servo" joint = "FR-Hip" kp = '1000'/>
-        <position name="FR-K-servo" joint = "FR-Knee" kp = "1000"/>
-        <position name="FR-R-servo" joint = "FR-Roll" kp = '1000'/>
+        <position name="FR-H-servo" joint = "FR-Hip" kp = '500'/>
+        <position name="FR-K-servo" joint = "FR-Knee" kp = "500"/>
+        <position name="FR-R-servo" joint = "FR-Roll" kp = '500'/>
 
         <!-- Front Left -->
-        <position name="FL-H-servo" joint = "FL-Hip" kp = '1000'/>
-        <position name="FL-K-servo" joint = "FL-Knee" kp = "1000"/>
-        <position name="FL-R-servo" joint = "FL-Roll" kp = '1000'/>
+        <position name="FL-H-servo" joint = "FL-Hip" kp = '500'/>
+        <position name="FL-K-servo" joint = "FL-Knee" kp = "500"/>
+        <position name="FL-R-servo" joint = "FL-Roll" kp = '500'/>
 
 
         <!-- Back Right -->
-        <position name="BR-H-servo" joint = "BR-Hip" kp = '1000'/>
-        <position name="BR-K-servo" joint = "BR-Knee" kp = "1000"/>
-        <position name="BR-R-servo" joint = "BR-Roll" kp = '1000'/>
+        <position name="BR-H-servo" joint = "BR-Hip" kp = '500'/>
+        <position name="BR-K-servo" joint = "BR-Knee" kp = "500"/>
+        <position name="BR-R-servo" joint = "BR-Roll" kp = '500'/>
 
 
         <!-- Back Left -->
-        <position name="BL-H-servo" joint = "BL-Hip" kp = '1000'/>
-        <position name="BL-K-servo" joint = "BL-Knee" kp = "1000"/>
-        <position name="BL-R-servo" joint = "BL-Roll" kp = '1000'/>
+        <position name="BL-H-servo" joint = "BL-Hip" kp = '500'/>
+        <position name="BL-K-servo" joint = "BL-Knee" kp = "500"/>
+        <position name="BL-R-servo" joint = "BL-Roll" kp = '500'/>
 
     </actuator>
 </mujoco>

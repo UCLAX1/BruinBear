@@ -22,7 +22,7 @@ button_right = False
 lastx = 0
 lasty = 0
 
-modelPath = 'quadruped-new/quadruped_o.xml'
+modelPath = '/quadruped-new/quadruped.xml'
 displayRefreshRate = 30
 joints = startPos
 
@@ -50,21 +50,21 @@ class jointPosSub(Node):
         #msg.data = [0.0,0.0]
         self.publisher_.publish(msg)
         #self.get_logger().info(f'Published imu data: {msg.data}')
-    def pub_rangefinder_data(self):
-        msg = Float32MultiArray()
-        if(getRange('range1') < 2000):
-            msg.data.append(getRange('range2'))
-        else:
-            msg.data.append(-1)
-        if(getRange('range2') < 2000):
-            msg.data.append(getRange('range1'))
-        else:
-            msg.data.append(-1)
-        if(getRange('range3') < 2000):
-            msg.data.append(getRange('range3'))
-        else:
-            msg.data.append(-1)
-        self.publisher_.publish(msg)
+    # def pub_rangefinder_data(self):
+    #     msg = Float32MultiArray()
+    #     if(getRange('range1') < 2000):
+    #         msg.data.append(getRange('range2'))
+    #     else:
+    #         msg.data.append(-1)
+    #     if(getRange('range2') < 2000):
+    #         msg.data.append(getRange('range1'))
+    #     else:
+    #         msg.data.append(-1)
+    #     if(getRange('range3') < 2000):
+    #         msg.data.append(getRange('range3'))
+    #     else:
+    #         msg.data.append(-1)
+    #     self.publisher_.publish(msg)
         #self.get_logger().info("publishing: " + str(msg)) 
 
 def get_yaw_from_quaternion(quaternion):
@@ -319,10 +319,10 @@ bear_qpos = model.jnt_qposadr[cube3]  # Get qpos index for bear
 
 com_id = mj.mj_name2id(model, mj.mjtObj.mjOBJ_BODY, 'com-sphere')
 
-def getRange(rangefinder_name):
-    # mujoco.mj_resetData(model, data)
-    # data.ctrl = 20
-    return data.sensor(rangefinder_name).data.copy()
+# def getRange(rangefinder_name):
+#     # mujoco.mj_resetData(model, data)
+#     # data.ctrl = 20
+#     return data.sensor(rangefinder_name).data.copy()
 
 rclpy.init()
 counter = 0
@@ -389,7 +389,7 @@ def main(args=None):
 
         while data.time - time_prev < 1.0/displayRefreshRate:
             rclpy.spin_once(simNode, timeout_sec=0)
-            simNode.pub_rangefinder_data()
+            # simNode.pub_rangefinder_data()
             data.ctrl[FLH] = joints[0]
             data.ctrl[FRH] = joints[1]
             data.ctrl[BRH] = joints[2]
