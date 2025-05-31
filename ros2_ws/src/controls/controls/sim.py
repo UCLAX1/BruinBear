@@ -22,7 +22,7 @@ button_right = False
 lastx = 0
 lasty = 0
 
-modelPath = '/quadruped-new/quadruped.xml'
+modelPath = 'quadruped-new/quadruped.xml'
 displayRefreshRate = 30
 joints = startPos
 
