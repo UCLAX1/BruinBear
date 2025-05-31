@@ -23,7 +23,7 @@ lastx = 0
 lasty = 0
 
 modelPath = 'quadruped-new/quadruped_o.xml'
-displayRefreshRate = 120
+displayRefreshRate = 30
 joints = startPos
 
 class jointPosSub(Node):

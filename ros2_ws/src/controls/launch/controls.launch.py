@@ -22,10 +22,10 @@ def generate_launch_description():
             package='controls',
             executable='legs',
             name='legs'
-        )
-        Node(
-            package='controls',
-            executable='movement_controller',
-            name = 'movement_controller'
         ),
+        # Node(
+        #     package='controls',
+        #     executable='movement_controller',
+        #     name = 'movement_controller'
+        # ),
     ])
