@@ -42,7 +42,7 @@ class PingPong(FSM):
         
     def update(self, cell_data):
         # self.log(f"Cell Data length" + str(len(cell_data)))
-        left_range, middle_range, right_range = cell_data[1], cell_data[19], cell_data[24]
+        left_range, middle_range, right_range = cell_data[0], cell_data[int(len(cell_data)/2)], cell_data[len(cell_data) - 2]
         left_range /= 1000
         middle_range /= 1000
         right_range /= 1000

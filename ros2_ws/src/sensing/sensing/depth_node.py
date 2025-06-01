@@ -168,7 +168,7 @@ class DepthListenerNode(Node):
         # print("Publishing Data")
         #return output_msg #returns ros Vector3 message for publisher
 
-    def publish_cell_data_msg(self, depth_image, grid_size = [3,12]):
+    def publish_cell_data_msg(self, depth_image, grid_size = [3,6]):
         # positions = self.get_cell_data(depth_image, grid_size)
 
         # print(positions)
