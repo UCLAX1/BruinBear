@@ -42,6 +42,7 @@ class gaitPublisher(Node):
        10
        )
     self.cycle = 0
+    self.counter = 0
     self.ping_pong = fsms.PingPong(logger=self.get_logger())
     
     # self.subscription
@@ -51,7 +52,8 @@ class gaitPublisher(Node):
   def pub_gait(self, message):
     msg = String()
     msg.data = message
-    self.get_logger().info(f'Publishing gait: {message}')
+    if self.counter % 10 == 0:
+      self.get_logger().info(f'Publishing gait: {message}')
     self.publisher_.publish(msg)
 
   def listener_callback(self, msg):
