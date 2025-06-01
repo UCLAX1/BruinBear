@@ -2,7 +2,6 @@ import cv2
 import mediapipe as mp
 import time
 
-
 class FaceDetector():
     def __init__(self, minDetectionCon=0.5):
 
@@ -32,6 +31,47 @@ class FaceDetector():
                             2, (255, 0, 255), 2)
         return img, bboxs
 
+    def findCenter(self, bbox):
+        x, y, w, h = bbox
+        center_x = x + w // 2
+        center_y = y + h // 2
+        return (center_x, center_y)
+    
+    def returnCenter(self, img):
+        img, bboxes = self.findFaces(img, draw=False)
+        max_confidence = 0
+        first_box = None
+        for box in bboxes:
+            if(box[2][0] > max_confidence):
+                max_confidence = box[2][0]
+                first_box = box
+        if first_box == None:
+            return
+        coordinates = first_box[1]
+        center = self.findCenter(coordinates)
+        return center
+
+    def getImageDimensions(self, img):
+        height, width, channels = img.shape
+        return width, height
+
+    def returnRelativePosition(self, center, img):
+        width, height = self.getImageDimensions(img)
+        if center == None:
+            center_x, center_y = 0, 0
+        else:
+            center_x, center_y = center
+    
+        # Calculate relative position (0.0 to 1.0)
+        rel_x = center_x / width
+        rel_y = center_y / height
+        return (rel_x, rel_y)
+        
+    def returnSignal(self, relativeCenter):
+        rel_x, rel_y = relativeCenter
+        return (rel_x - 0.5, rel_y - 0.5)
+            
+    
     def fancyDraw(self, img, bbox, l=30, t=5, rt= 1):
         x, y, w, h = bbox
         x1, y1 = x + w, y + h
@@ -61,8 +101,14 @@ def main():
     while True:
         success, img = cap.read()
         img, bboxs = detector.findFaces(img)
-        print(bboxs)
-
+        #print(bboxs)
+        center = detector.returnCenter(img)
+        #print(coordinates)
+        relative = detector.returnRelativePosition(center, img)
+        #print(relative)
+        returnSignal = detector.returnSignal(relative)
+        print(returnSignal)
+        
         cTime = time.time()
         fps = 1 / (cTime - pTime)
         pTime = cTime
