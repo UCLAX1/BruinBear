@@ -88,10 +88,9 @@ class Motor:
                 self.log(f"WARNING: Timeout waiting for motor {self.motor_id} position.")
                 raise Exception("Motor not connected")
             time.sleep(0.05)
-            return
         
         self.log(f"motor connected {self.motor_id}")
-        self.log(f"current motor position {self.get_pos()}")
+        # self.log(f"current motor position {self.get_pos()}")
 
     def log(self, msg):
         if self.logger:

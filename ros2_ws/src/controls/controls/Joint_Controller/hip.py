@@ -19,6 +19,10 @@ class Hip:
         self.leg_id = leg_id
         self.current_position = 0
         self.inverted = inverted
+        
+        if inverted:
+            self.MIN_TICKS = -self.MAX_TICKS
+            self.MAX_TICKS = 0
                 
         # PID variables
         self.previous_error = 0
@@ -34,7 +38,8 @@ class Hip:
     def set_target_rad(self, target):
         #x = target
         #ticks = ((-15.279) * x) * (-1 if self.inverted else 1)
-        ticks = -7.64 * target
+        target = abs(target)
+        ticks = 7.64 * target * (-1 if self.inverted else 1)
         self.set_target_ticks(ticks)
         return ticks
 

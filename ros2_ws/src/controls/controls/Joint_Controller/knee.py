@@ -34,6 +34,7 @@ class Knee:
         #y = target
         #x = 180*y/math.pi 
         #ticks = ((-2.29)*x -1)
+        target = abs(target)
         ticks = (-11.45 * target ) + 9
         # 11.08 * x - 24.687
         self.set_target_ticks(ticks)

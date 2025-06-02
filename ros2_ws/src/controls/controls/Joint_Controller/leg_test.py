@@ -43,9 +43,9 @@ def main(args=None):
     bus = CanBus()
     bus.start()
     
-    knee = Knee(1, bus)
-    hip = Hip(2, bus)
-    roll = Roll(3, bus)
+    knee = Knee(5, bus)
+    hip = Hip(4, bus, inverted=True)
+    # roll = Roll(3, bus)
     
     knee_ticks = 0
     hip_ticks = 0
@@ -53,24 +53,24 @@ def main(args=None):
     
     while True:
         rclpy.spin_once(joint_pos_sub, timeout_sec=0)
-        hip_pos = joint_positions[0]
-        knee_pos = joint_positions[4]
-        roll_pos = joint_positions[8]
+        hip_pos = joint_positions[1]
+        knee_pos = joint_positions[5]
+        roll_pos = joint_positions[9]
         
         if (cycle % 10000 == 0):
             joint_pos_sub.get_logger().info(f"receiving positions: {hip_pos}, {knee_pos}, {roll_pos}")
             joint_pos_sub.get_logger().info(f"setting ticks: {hip_ticks}, {knee_ticks}, {roll_ticks}")
-            joint_pos_sub.get_logger().info(f"setting power: {hip.motor_power}, {knee.motor_power}, {roll.motor_power}")
-            joint_pos_sub.get_logger().info(f"motors at pos: {hip.current_position}, {knee.current_position}, {roll.current_position}")
+            # joint_pos_sub.get_logger().info(f"setting power: {hip.motor_power}, {knee.motor_power}, {roll.motor_power}")
+            # joint_pos_sub.get_logger().info(f"motors at pos: {hip.current_position}, {knee.current_position}, {roll.current_position}")
         cycle+=1
         
         knee_ticks = knee.set_target_rad(knee_pos)
-        #hip_ticks = hip.set_target_rad(hip_pos)
-        roll_ticks = roll.set_target_rad(roll_pos)
+        hip_ticks = hip.set_target_rad(hip_pos)
+        # roll_ticks = roll.set_target_rad(roll_pos)
         
         knee.update_motor_power()
-        #hip.update_motor_power()
-        roll.update_motor_power()
+        hip.update_motor_power()
+        # roll.update_motor_power()
         
         # time.sleep(0.2)
        
