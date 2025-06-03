@@ -66,9 +66,14 @@ class HeadSerialController:
         # Convert to integers and clamp to servo range (0-180)
         left_servo = int(ltarget)
         right_servo = int(rtarget)
+
+        # Clamp servo values to valid ranges
+        left_servo = min(LEFT_SERVO[0], max(left_servo, LEFT_SERVO[1]))
+        right_servo = max(RIGHT_SERVO[0], min(right_servo, RIGHT_SERVO[1]))
         
         # Send as 2 bytes
         message = bytes([left_servo, right_servo])
+
         return message
         
     def runCamera(self):

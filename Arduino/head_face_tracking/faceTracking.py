@@ -1,4 +1,5 @@
 import cv2
+from send_head_serial import HeadSerialController
 import mediapipe as mp
 import time
 
@@ -69,7 +70,7 @@ class FaceDetector():
         
     def returnSignal(self, relativeCenter):
         rel_x, rel_y = relativeCenter
-        return (rel_x - 0.5, rel_y - 0.5)
+        return (rel_x - 0.5, -rel_y + 0.5)
             
     
     def fancyDraw(self, img, bbox, l=30, t=5, rt= 1):
@@ -98,6 +99,8 @@ def main():
     cap = cv2.VideoCapture(0)
     pTime = 0
     detector = FaceDetector()
+    headSerialController = HeadSerialController()
+    
     while True:
         success, img = cap.read()
         img, bboxs = detector.findFaces(img)
@@ -108,6 +111,8 @@ def main():
         #print(relative)
         returnSignal = detector.returnSignal(relative)
         print(returnSignal)
+
+        headSerialController.send_command(returnSignal)
         
         cTime = time.time()
         fps = 1 / (cTime - pTime)
