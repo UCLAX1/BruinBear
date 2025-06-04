@@ -43,9 +43,11 @@ def main(args=None):
     bus = CanBus()
     bus.start()
     
-    knee = Knee(5, bus)
-    hip = Hip(4, bus, inverted=True)
-    # roll = Roll(3, bus)
+    knee = Knee(2, bus)
+    hip = Hip(1, bus, inverted=False)
+    roll = Roll(3, bus)
+
+    
     
     knee_ticks = 0
     hip_ticks = 0
@@ -53,9 +55,9 @@ def main(args=None):
     
     while True:
         rclpy.spin_once(joint_pos_sub, timeout_sec=0)
-        hip_pos = joint_positions[1]
-        knee_pos = joint_positions[5]
-        roll_pos = joint_positions[9]
+        hip_pos = joint_positions[0]
+        knee_pos = joint_positions[4]
+        roll_pos = joint_positions[8]
         
         if (cycle % 10000 == 0):
             joint_pos_sub.get_logger().info(f"receiving positions: {hip_pos}, {knee_pos}, {roll_pos}")
@@ -66,11 +68,11 @@ def main(args=None):
         
         knee_ticks = knee.set_target_rad(knee_pos)
         hip_ticks = hip.set_target_rad(hip_pos)
-        # roll_ticks = roll.set_target_rad(roll_pos)
+        roll_ticks = roll.set_target_rad(0)
         
         knee.update_motor_power()
         hip.update_motor_power()
-        # roll.update_motor_power()
+        roll.update_motor_power()
         
         # time.sleep(0.2)
        
