@@ -6,7 +6,7 @@ import time
 
 # Add the face_detection directory to Python path
 sys.path.append(os.path.join(os.path.dirname(__file__), '../../face_dectection'))
-from face_detection import FaceDetector
+from faceTracking import FaceDetector
 
 # CONFIGURATION
 SERIAL_PORT = "/dev/ttyACM0"  # Update if different
@@ -76,9 +76,33 @@ class HeadSerialController:
 
         return message
         
-    def runCamera(self):
-        """Run camera, detect faces, calculate coordinates and send commands"""
-        # Initialize face detector
-        detector = FaceDetector()
+def runCamera():
+    """Run camera, detect faces, calculate coordinates and send commands"""
+    # Initialize face detector
+    cap = cv2.VideoCapture(0)
+    pTime = 0
+    detector = FaceDetector()
+    headSerialController = HeadSerialController()
+    
+    while True:
+        success, img = cap.read()
+        img, bboxs = detector.findFaces(img)
+        #print(bboxs)
+        center = detector.returnCenter(img)
+        #print(coordinates)
+        relative = detector.returnRelativePosition(center, img)
+        #print(relative)
+        returnSignal = detector.returnSignal(relative)
+        print(returnSignal)
+
+        headSerialController.send_command(returnSignal)
         
-        
+        cTime = time.time()
+        fps = 1 / (cTime - pTime)
+        pTime = cTime
+        cv2.putText(img, f'FPS: {int(fps)}', (20, 70), cv2.FONT_HERSHEY_PLAIN, 3, (0, 255, 0), 2)
+        cv2.imshow("Image", img)
+        cv2.waitKey(1)
+
+if __name__ == "__main__":
+    runCamera()

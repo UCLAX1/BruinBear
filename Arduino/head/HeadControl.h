@@ -86,6 +86,12 @@ class HeadControl {
     void closeJaw() {
       jawServo.write(jawClosedPos);
     }
+
+    void setTiltPosition(int leftPos, int rightPos)
+    {
+      leftTiltServo.write(leftPos);
+      rightTiltServo.write(rightPos);
+    }
 };
 
 #endif

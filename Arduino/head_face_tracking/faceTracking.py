@@ -99,7 +99,7 @@ def main():
     cap = cv2.VideoCapture(0)
     pTime = 0
     detector = FaceDetector()
-    headSerialController = HeadSerialController()
+    #headSerialController = HeadSerialController()
     
     while True:
         success, img = cap.read()
@@ -112,7 +112,7 @@ def main():
         returnSignal = detector.returnSignal(relative)
         print(returnSignal)
 
-        headSerialController.send_command(returnSignal)
+        #headSerialController.send_command(returnSignal)
         
         cTime = time.time()
         fps = 1 / (cTime - pTime)
