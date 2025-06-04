@@ -47,9 +47,9 @@ def main(args=None):
     FLKnee = Knee(2, bus)
     FLRoll = Roll(3, bus)
 
-    # FRHip = Hip(4, bus, inverted=True)
-    # FRKnee = Knee(5, bus)
-    # FRRoll = Roll(6, bus)
+    FRHip = Hip(4, bus, inverted=True)
+    FRKnee = Knee(5, bus)
+    FRRoll = Roll(6, bus)
 
     joint_positions = [0] * 12
     
@@ -67,17 +67,17 @@ def main(args=None):
         FLKnee.set_target_rad(joint_positions[4])
         FLRoll.set_target_rad(joint_positions[8])
 
-        # FRHip.set_target_rad(joint_positions[1])
-        # FRKnee.set_target_rad(joint_positions[5])
-        # FRRoll.set_target_rad(joint_positions[9])
+        FRHip.set_target_rad(joint_positions[1])
+        FRKnee.set_target_rad(joint_positions[5])
+        FRRoll.set_target_rad(joint_positions[9])
         
         FLKnee.update_motor_power()
         FLHip.update_motor_power()
         FLRoll.update_motor_power()
 
-        # FRKnee.update_motor_power()
-        # FRHip.update_motor_power()
-        # FRRoll.update_motor_power()
+        FRKnee.update_motor_power()
+        FRHip.update_motor_power()
+        FRRoll.update_motor_power()
         
         # time.sleep(0.2)
        
