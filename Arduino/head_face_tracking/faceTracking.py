@@ -1,5 +1,4 @@
 import cv2
-from send_head_serial import HeadSerialController
 import mediapipe as mp
 import time
 
