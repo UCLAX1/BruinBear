@@ -7,7 +7,8 @@ import tty
 import termios
 
 # CONFIGURATION
-SERIAL_PORT = "/dev/ttyACM0"  # Update if different
+# SERIAL_PORT = "/dev/ttyACM0"  # Update if different
+SERIAL_PORT = "/dev/ttyUSB0"
 BAUD_RATE = 9600
 
 # Open serial connection
@@ -30,10 +31,14 @@ while True:
     key = get_key()
     if key == '\x1b[A':  # Up arrow
         print("Sending: ON")
-        ser.write(b'ON\n')
+        # ser.write(b'ON\n')
+        message = bytes([60, 120])
+        ser.write(message)
+
     elif key == '\x1b[B':  # Down arrow
         print("Sending: OFF")
-        ser.write(b'OFF\n')
+        message = bytes([1, 180])
+        ser.write(message)
     else:
         print("Exiting...")
         ser.close()

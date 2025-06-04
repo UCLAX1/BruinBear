@@ -4,12 +4,20 @@ import serial
 import cv2
 import time
 
+import serial.tools.list_ports
+
+ports = serial.tools.list_ports.comports()
+for p in ports:
+    print(p.device)
+    
+
 # Add the face_detection directory to Python path
 sys.path.append(os.path.join(os.path.dirname(__file__), '../../face_dectection'))
 from faceTracking import FaceDetector
 
 # CONFIGURATION
-SERIAL_PORT = "/dev/ttyACM0"  # Update if different
+# SERIAL_PORT = "/dev/ttyACM0"  # Update if different
+SERIAL_PORT = "/dev/ttyUSB0"
 BAUD_RATE = 9600
 
 LEFT_SERVO = [60, 1]
@@ -34,7 +42,7 @@ class HeadSerialController:
         self.const = 0.1
         
         try:
-            self.arduino = serial.Serial(port, baudrate, timeout)  # open serial port
+            self.arduino = serial.Serial(port=port, baudrate=baudrate, timeout=timeout)  # open serial port
             print(self.arduino.name)         # check which port was really used
             time.sleep(2)
         except Exception as e:
@@ -70,6 +78,7 @@ class HeadSerialController:
         # Clamp servo values to valid ranges
         left_servo = min(LEFT_SERVO[0], max(left_servo, LEFT_SERVO[1]))
         right_servo = max(RIGHT_SERVO[0], min(right_servo, RIGHT_SERVO[1]))
+
         
         # Send as 2 bytes
         message = bytes([left_servo, right_servo])
@@ -79,13 +88,14 @@ class HeadSerialController:
 def runCamera():
     """Run camera, detect faces, calculate coordinates and send commands"""
     # Initialize face detector
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture("/dev/video0")
     pTime = 0
     detector = FaceDetector()
     headSerialController = HeadSerialController()
     
     while True:
         success, img = cap.read()
+        print(success)
         img, bboxs = detector.findFaces(img)
         #print(bboxs)
         center = detector.returnCenter(img)
@@ -93,7 +103,7 @@ def runCamera():
         relative = detector.returnRelativePosition(center, img)
         #print(relative)
         returnSignal = detector.returnSignal(relative)
-        print(returnSignal)
+        # print(returnSignal)
 
         headSerialController.send_command(returnSignal)
         
@@ -104,5 +114,41 @@ def runCamera():
         cv2.imshow("Image", img)
         cv2.waitKey(1)
 
+
+def find_arduino_port(baudrate=9600, timeout=1):
+    ports = serial.tools.list_ports.comports()
+    for port in ports:
+        device = port.device
+        print(f"Trying port: {device}")
+        try:
+            ser = serial.Serial(device, baudrate=baudrate, timeout=timeout)
+            time.sleep(0.5)  # wait for Arduino reset after opening port
+
+            # Optional: send a command or read some data to confirm it's Arduino
+            # For example, read a line if Arduino sends data on startup
+            if ser.in_waiting:
+                response = ser.readline().decode(errors='ignore').strip()
+                print(f"Received: {response}")
+                # Put your own check here if you know expected response
+
+            # If open succeeds, this port is likely the Arduino
+            ser.close()
+            print(f"Found device on port: {device}")
+            return device
+
+        except (serial.SerialException, OSError) as e:
+            print(f"Failed on port {device}: {e}")
+            continue
+
+    return None
+
 if __name__ == "__main__":
     runCamera()
+    # headSerialControllerNew = HeadSerialController()
+    # while True:
+    #     headSerialControllerNew.send_command((0.5, 0.5))
+    # arduino_port = find_arduino_port()
+    # if arduino_port:
+    #     print(f"Arduino found on port {arduino_port}")
+    # else:
+    #     print("Arduino not found.")
