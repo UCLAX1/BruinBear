@@ -18,11 +18,11 @@ def generate_launch_description():
         #     executable='fsm',
         #     name='fsm'
         # ),
-        # Node(
-        #     package='controls',
-        #     executable='legs',
-        #     name='legs'
-        # ),
+        Node(
+            package='controls',
+            executable='legs',
+            name='legs'
+        ),
         Node(
             package='controls',
             executable='movement_controller',

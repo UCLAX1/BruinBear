@@ -83,7 +83,7 @@ class Motor:
         self.log(f"waiting for motor {self.motor_id}")
         max_wait = 3
         start = time.time()
-        while not self.can_bus.motor_pos[self.motor_id]:
+        while self.can_bus.motor_pos[self.motor_id] is None:
             if time.time() - start > max_wait:
                 self.log(f"WARNING: Timeout waiting for motor {self.motor_id} position.")
                 raise Exception("Motor not connected")

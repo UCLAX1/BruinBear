@@ -8,7 +8,7 @@ import time
 bus = CanBus()
 bus.start()
 
-motor_ids = [4, 5, 6]
+motor_ids = [1, 2, 3]
 
 for i in motor_ids:
     motor = Motor(bus, i)
