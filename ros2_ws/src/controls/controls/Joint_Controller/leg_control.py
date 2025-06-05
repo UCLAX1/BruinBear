@@ -43,23 +43,26 @@ def main(args=None):
     bus = CanBus()
     bus.start()
     
-    FLHip = Hip(1, bus, inverted=False)
-    FLKnee = Knee(2, bus)
-    FLRoll = Roll(3, bus)
+    # FLHip = Hip(1, bus, inverted=False)
+    # FLKnee = Knee(2, bus)
+    # FLRoll = Roll(3, bus)
 
-    FRHip = Hip(4, bus, inverted=True)
-    FRKnee = Knee(5, bus)
-    FRRoll = Roll(6, bus)
+    # FRHip = Hip(4, bus, inverted=True)
+    # FRKnee = Knee(5, bus)
+    # FRRoll = Roll(6, bus)
 
-    BRHip = Hip(7, bus, inverted=False)
-    BRKnee = Knee(8, bus)
-    BRRoll = Roll(9, bus)
+    # BRHip = Hip(7, bus, inverted=False)
+    # BRKnee = Knee(8, bus)
+    # BRRoll = Roll(9, bus)
 
-    BLHip = Hip(10, bus, inverted=True)
-    BLKnee = Knee(11, bus)
-    BLRoll = Roll(12, bus)
+    # BLHip = Hip(10, bus, inverted=True)
+    # BLKnee = Knee(11, bus)
+    # BLRoll = Roll(12, bus)
 
     joint_positions = [0] * 12
+    
+    cycle = 0
+    last_time = time.time()
     
     while True:
         rclpy.spin_once(joint_pos_sub, timeout_sec=0)
@@ -71,22 +74,22 @@ def main(args=None):
             # joint_pos_sub.get_logger().info(f"motors at pos: {hip.current_position}, {knee.current_position}, {roll.current_position}")
         # cycle+=1
         
-        FLHip.set_target_rad(joint_positions[0])
-        FLKnee.set_target_rad(joint_positions[4])
-        FLRoll.set_target_rad(joint_positions[8])
+        # FLHip.set_target_rad(joint_positions[0])
+        # FLKnee.set_target_rad(joint_positions[4])
+        # FLRoll.set_target_rad(joint_positions[8])
 
-        FRHip.set_target_rad(joint_positions[1])
-        FRKnee.set_target_rad(joint_positions[5])
-        FRRoll.set_target_rad(joint_positions[9])
+        # FRHip.set_target_rad(joint_positions[1])
+        # FRKnee.set_target_rad(joint_positions[5])
+        # FRRoll.set_target_rad(joint_positions[9])
 
 
-        BRHip.set_target_rad(joint_positions[2])
-        BRKnee.set_target_rad(joint_positions[6])
-        BRRoll.set_target_rad(joint_positions[10])
+        # BRHip.set_target_rad(joint_positions[2])
+        # BRKnee.set_target_rad(joint_positions[6])
+        # BRRoll.set_target_rad(joint_positions[10])
 
-        BLHip.set_target_rad(joint_positions[3])
-        BLKnee.set_target_rad(joint_positions[7])
-        BLRoll.set_target_rad(joint_positions[11])
+        # BLHip.set_target_rad(joint_positions[3])
+        # BLKnee.set_target_rad(joint_positions[7])
+        # BLRoll.set_target_rad(joint_positions[11])
 
         
         # FLKnee.update_motor_power()
@@ -97,21 +100,24 @@ def main(args=None):
         # FRHip.update_motor_power()
         # FRRoll.update_motor_power()
 
-        BRKnee.update_motor_power()
-        BRHip.update_motor_power()
-        BRRoll.update_motor_power()
+        # BRKnee.update_motor_power()
+        # BRHip.update_motor_power()
+        # BRRoll.update_motor_power()
 
-        BLKnee.update_motor_power()
-        BLHip.update_motor_power()
-        BLRoll.update_motor_power()
-
-
+        # BLKnee.update_motor_power()
+        # BLHip.update_motor_power()
+        # BLRoll.update_motor_power()
 
 
-        
-        
-        # time.sleep(0.2)
-       
+
+        # Log cycle time every 1000 iterations
+        cycle += 1
+        if cycle % 1000 == 0:
+            current_time = time.time()
+            cycle_time = (current_time - last_time) / 1000  # Average time per cycle
+            joint_pos_sub.get_logger().info(f"Average cycle time: {cycle_time:.6f} seconds")
+            last_time = current_time
+
         
         
     
