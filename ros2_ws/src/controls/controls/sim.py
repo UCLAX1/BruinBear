@@ -334,7 +334,7 @@ motorSpeed = 0.001
 def main(args=None):
     # Init GLFW, create window, make OpenGL context current, request v-sync
     glfw.init()
-    window = glfw.create_window(1200, 900, "Demo", None, None)
+    window = glfw.create_window(640, 480, "Demo", None, None)
     glfw.make_context_current(window)
     glfw.swap_interval(1)
 

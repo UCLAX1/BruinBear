@@ -2,14 +2,14 @@
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String, Float32MultiArray
-import time
-import numpy as np
-from scipy.spatial.transform import Rotation as R
-import math
-from collections import deque
+# import time
+# import numpy as np
+# from scipy.spatial.transform import Rotation as R
+# import math
+# from collections import deque
 global gait_origin
 global gait 
-gait = 's'
+gait = 'sit'
 global celldata
 global cycle_time
 cycle_time = 10
@@ -53,7 +53,8 @@ class gaitPublisher(Node):
     msg = String()
     msg.data = message
     if self.counter % 10 == 0:
-      self.get_logger().info(f'Publishing gait: {message}')
+      pass
+      # self.get_logger().info(f'Publishing gait: {message}')
     self.publisher_.publish(msg)
 
   def listener_callback(self, msg):
@@ -99,15 +100,23 @@ average_position = []
 
 def main():
     rclpy.init()
-    # global gaitNode
+    global gait
     gaitNode = gaitPublisher()
+    
+    start = time.time()
+    
+    while time.time() - start < 1:
+      gait = 'sit'
+      gaitNode.pub_gait(gait)
 
     try:
       rclpy.spin(gaitNode)  
       pass
-    finally:
-      rclpy.shutdown()
+    except KeyboardInterrupt:
       pass
+    finally:
+      gaitNode.destroy_node()
+      rclpy.shutdown()
     
   
   

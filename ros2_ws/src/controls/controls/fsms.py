@@ -46,9 +46,9 @@ class PingPong(FSM):
         left_range /= 1000
         middle_range /= 1000
         right_range /= 1000
-        self.log(f"Range Middle {str(middle_range)}")
-        self.log(f'Range Left {str(left_range)}')
-        self.log(f'Range Right: {str(right_range)}')
+        # self.log(f"Range Middle {str(middle_range)}")
+        # self.log(f'Range Left {str(left_range)}')
+        # self.log(f'Range Right: {str(right_range)}')
         
         if self.previousAction == 'b':
             self.action = self.actions[np.random.randint(0,2)]

@@ -39,7 +39,7 @@ class DepthListenerNode(Node):
             # Convert ROS Image message to OpenCV image
             depth_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='passthrough')        
             # Display depth image
-            self.display_depth_image(depth_image)
+            # self.display_depth_image(depth_image)
             # self.publish_cell_data_msg(depth_image)
        
             #return depth_image_meters
@@ -83,6 +83,27 @@ class DepthListenerNode(Node):
         # cv2.imwrite('convolved_image.png', blurred_image)
         return blurred_image
 
+    def blur_depth_image_gpu(self, depth_image, h, w):
+    # Construct the same kernel
+        ratio = 100
+        kernel_width = w // ratio
+        kernel_height = h // ratio
+        kernel = np.ones((kernel_height, kernel_width), np.float32) / (kernel_width * kernel_height)
+
+        # Upload image to GPU
+        gpu_image = cv2.cuda_GpuMat()
+        gpu_image.upload(depth_image.astype(np.float32))
+
+        # Create CUDA filter
+        gpu_filter = cv2.cuda.createLinearFilter(cv2.CV_32F, cv2.CV_32F, kernel)
+
+        # Apply filter
+        gpu_result = gpu_filter.apply(gpu_image)
+
+        # Download result back to CPU
+        blurred_image = gpu_result.download()
+
+        return blurred_image
     def get_position_distance_of_obstacle(self,depth_image, grid_size):
         #algorithm to check for nearest obstacle
         #grid_size = [16, 16] #row size, col size
@@ -109,7 +130,7 @@ class DepthListenerNode(Node):
     
     def get_cell_data(self, depth_image, grid_size):
         h, w = depth_image.shape
-        blurred_depth_image = self.blur_depth_image(depth_image, h, w)
+        blurred_depth_image = self.blur_depth_image_gpu(depth_image, h, w)
         cell_h, cell_w = h // grid_size[0], w // grid_size[1]
         blurred_depth_image_averages = np.zeros(grid_size)
 
@@ -232,13 +253,13 @@ def main(args=None):
     try:
         #rclpy.spin(listener_node)  # Spin the node to keep it alive
         rclpy.spin(listener_node)
-    
-    
+        pass
+    except KeyboardInterrupt:
         pass
     finally:
         # Shutdown the node gracefully on exit
+        listener_node.destroy_node()
         rclpy.shutdown()
-        pass
 
 
 if __name__ == '__main__':
