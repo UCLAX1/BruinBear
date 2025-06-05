@@ -12,7 +12,7 @@ class Roll:
     dt = 0.01  # Time step for PID loop
     MIN_TICKS = -1
     MAX_TICKS = 1
-    MAX_POWER = 0.3
+    MAX_POWER = 0.5
     
     def __init__(self, motor_id : int, can_bus : CanBus, inverted=False, leg_id="leg"):
         self.motor = Motor(can_bus, motor_id)
