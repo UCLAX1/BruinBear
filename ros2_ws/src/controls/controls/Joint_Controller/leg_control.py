@@ -51,6 +51,14 @@ def main(args=None):
     FRKnee = Knee(5, bus)
     FRRoll = Roll(6, bus)
 
+    BRHip = Hip(7, bus, inverted=False)
+    BRKnee = Knee(8, bus)
+    BRRoll = Roll(9, bus)
+
+    BLHip = Hip(10, bus, inverted=True)
+    BLKnee = Knee(11, bus)
+    BLRoll = Roll(12, bus)
+
     joint_positions = [0] * 12
     
     while True:
@@ -70,14 +78,37 @@ def main(args=None):
         FRHip.set_target_rad(joint_positions[1])
         FRKnee.set_target_rad(joint_positions[5])
         FRRoll.set_target_rad(joint_positions[9])
-        
-        FLKnee.update_motor_power()
-        FLHip.update_motor_power()
-        FLRoll.update_motor_power()
 
-        FRKnee.update_motor_power()
-        FRHip.update_motor_power()
-        FRRoll.update_motor_power()
+
+        BRHip.set_target_rad(joint_positions[2])
+        BRKnee.set_target_rad(joint_positions[6])
+        BRRoll.set_target_rad(joint_positions[10])
+
+        BLHip.set_target_rad(joint_positions[3])
+        BLKnee.set_target_rad(joint_positions[7])
+        BLRoll.set_target_rad(joint_positions[11])
+
+        
+        # FLKnee.update_motor_power()
+        # FLHip.update_motor_power()
+        # FLRoll.update_motor_power()
+
+        # FRKnee.update_motor_power()
+        # FRHip.update_motor_power()
+        # FRRoll.update_motor_power()
+
+        BRKnee.update_motor_power()
+        BRHip.update_motor_power()
+        BRRoll.update_motor_power()
+
+        BLKnee.update_motor_power()
+        BLHip.update_motor_power()
+        BLRoll.update_motor_power()
+
+
+
+
+        
         
         # time.sleep(0.2)
        
