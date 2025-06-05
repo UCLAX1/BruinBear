@@ -10,10 +10,10 @@ class Hip:
     ki = 0.0  # Integral gain
     kd = 0.00  # Derivative gain
     dt = 0.01  # Time step for PID loop
-    MAX_ABS_TICKS = 5
+    MAX_ABS_TICKS = 11
     MIN_TICKS = 0
     MAX_TICKS = 0
-    MAX_POWER = 0.3
+    MAX_POWER = 0.6
     
     def __init__(self, motor_id : int, can_bus : CanBus, inverted=False, leg_id="leg"):
         self.motor = Motor(can_bus, motor_id)
@@ -22,11 +22,11 @@ class Hip:
         self.inverted = inverted
         
         if inverted:
-            self.MIN_TICKS = -self.MAX_ABS_TICKS
-            self.MAX_TICKS = 0
-        else:
             self.MIN_TICKS = 0
             self.MAX_TICKS = self.MAX_ABS_TICKS
+        else:
+            self.MIN_TICKS = -self.MAX_ABS_TICKS
+            self.MAX_TICKS = 0
                 
         # PID variables
         self.previous_error = 0
@@ -43,7 +43,8 @@ class Hip:
         #x = target
         #ticks = ((-15.279) * x) * (-1 if self.inverted else 1)
         target = abs(target)
-        ticks = 7.64 * target * (-1 if self.inverted else 1)
+        #ticks = 7.64 * target * (-1 if self.inverted else 1) for standing reset
+        ticks = (-11.357 + 7.64 * target) * (-1 if self.inverted else 1)
         self.set_target_ticks(ticks)
         return ticks
 

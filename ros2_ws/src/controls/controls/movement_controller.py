@@ -2,7 +2,7 @@
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String, Float32MultiArray
-# import time
+import time
 # import numpy as np
 # from scipy.spatial.transform import Rotation as R
 # import math
@@ -105,9 +105,12 @@ def main():
     
     start = time.time()
     
-    while time.time() - start < 1:
+    while time.time() - start < 5:
       gait = 'sit'
       gaitNode.pub_gait(gait)
+      
+    gait = 'f'
+    gaitNode.pub_gait(gait)
 
     try:
       rclpy.spin(gaitNode)  

@@ -10,9 +10,9 @@ class Knee:
     ki = 0.0  # Integral gain
     kd = 0.0  # Derivative gain
     dt = 0.01  # Time step for PID loop
-    MIN_TICKS = -9
-    MAX_TICKS = 0
-    MAX_POWER = 0.3
+    MIN_TICKS = 0
+    MAX_TICKS = 16
+    MAX_POWER = 0.6
     
     def __init__(self, motor_id : int, can_bus : CanBus, inverted=False, leg_id="leg"):
         self.motor = Motor(can_bus, motor_id)
@@ -35,7 +35,7 @@ class Knee:
         #x = 180*y/math.pi 
         #ticks = ((-2.29)*x -1)
         target = abs(target)
-        ticks = (-11.45 * target ) + 9
+        ticks = (-11.45 * target ) + 25.79  # +9 for standing reset
         # 11.08 * x - 24.687
         self.set_target_ticks(ticks)
         return ticks
