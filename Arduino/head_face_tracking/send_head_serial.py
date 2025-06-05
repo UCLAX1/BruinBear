@@ -25,9 +25,9 @@ RIGHT_SERVO = [120, 180]
 FRAME_DIM = [-0.5, 0.5]
 
 # CALCULATED CONSTANTS
-LEFT_SERVO_DISTANCE = LEFT_SERVO[1] - LEFT_SERVO[0]
+LEFT_SERVO_DISTANCE = abs(LEFT_SERVO[1] - LEFT_SERVO[0])
 LEFT_SERVO_MIDDLE = (LEFT_SERVO[1] + LEFT_SERVO[0]) / 2
-RIGHT_SERVO_DISTANCE = RIGHT_SERVO[1] - RIGHT_SERVO[0]
+RIGHT_SERVO_DISTANCE = abs(RIGHT_SERVO[1] - RIGHT_SERVO[0])
 RIGHT_SERVO_MIDDLE = (RIGHT_SERVO[1] + RIGHT_SERVO[0]) / 2
 FRAME_DIM_DISTANCE = FRAME_DIM[1] - FRAME_DIM[0]
 FRAME_DIM_MIDDLE = (FRAME_DIM[1] + FRAME_DIM[0]) / 2
@@ -50,6 +50,7 @@ class HeadSerialController:
             self.arduino = None
     
     def send_command(self, coordinates):
+        msg = self.convert_coords(coordinates)
         if self.arduino:
             try:
                 message = self.convert_coords(coordinates)
@@ -61,15 +62,23 @@ class HeadSerialController:
     def convert_coords(self, coordinates):
         xcoord = coordinates[0]
         ycoord = coordinates[1]
-        self.average = ycoord * self.const + self.average
-        self.difference = xcoord * self.const + self.difference
 
-        lpos = self.average - self.difference/2 
-        rpos = self.average + self.difference/2
+        self.average = -ycoord * self.const + self.average
+        self.average = min(max(self.average, 0), 1)  # Clamp average to frame dimensions
 
-        ltarget = LEFT_SERVO[0] - LEFT_SERVO_DISTANCE * lpos
-        rtarget = RIGHT_SERVO[0] + RIGHT_SERVO_DISTANCE * rpos
-        
+        self.difference = -xcoord * self.const + self.difference
+        self.difference = min(max(self.difference, -1), 1)  # Clamp difference to frame dimensions
+
+        # print(f"X-Coord: {xcoord}, Y-Coord: {ycoord}, Average: {self.average}, Difference: {self.difference}")
+
+        lpos = self.average - self.difference/2 # between 0 and 1
+        rpos = self.average + self.difference/2 # between 0 and 1
+
+        lpos = min(max(lpos, 0), 1)  # Clamp to [0, 1]
+        rpos = min(max(rpos, 0), 1)  # Clamp to [0, 1]
+
+        ltarget = LEFT_SERVO[1] + LEFT_SERVO_DISTANCE * lpos
+        rtarget = RIGHT_SERVO[1] - RIGHT_SERVO_DISTANCE * rpos
         
         # Convert to integers and clamp to servo range (0-180)
         left_servo = int(ltarget)
@@ -79,6 +88,7 @@ class HeadSerialController:
         left_servo = min(LEFT_SERVO[0], max(left_servo, LEFT_SERVO[1]))
         right_servo = max(RIGHT_SERVO[0], min(right_servo, RIGHT_SERVO[1]))
 
+        print(f"Left Servo: {left_servo}, Right Servo: {right_servo}")
         
         # Send as 2 bytes
         message = bytes([left_servo, right_servo])
@@ -95,18 +105,24 @@ def runCamera():
     
     while True:
         success, img = cap.read()
-        print(success)
         img, bboxs = detector.findFaces(img)
         #print(bboxs)
         center = detector.returnCenter(img)
         #print(coordinates)
         relative = detector.returnRelativePosition(center, img)
-        #print(relative)
-        returnSignal = detector.returnSignal(relative)
-        print(returnSignal)
-        print(headSerialController.convertCoords(returnSignal))
 
-        headSerialController.send_command(returnSignal)
+        if relative is not None:
+
+            #print(relative)
+            returnSignal = detector.returnSignal(relative)
+
+            returnSignal = tuple(int(x * 100) / 100 for x in returnSignal)
+
+            print(returnSignal)
+
+            headSerialController.send_command(returnSignal)
+
+
         
         cTime = time.time()
         fps = 1 / (cTime - pTime)
