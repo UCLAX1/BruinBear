@@ -4,6 +4,7 @@
 // Create the EyeDisplay object
 EyeDisplay eye;
 HeadControl headServos;
+unsigned long startTime;
 
 void setup() {
   Serial.begin(9600); // Initialize serial communication
@@ -11,7 +12,7 @@ void setup() {
   eye.begin();
   headServos.begin();
 
-  startTime = millis() / 1000;  
+  startTime = millis() / 1000; 
 }
 
 void loop() {
