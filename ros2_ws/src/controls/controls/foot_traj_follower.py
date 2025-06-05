@@ -17,7 +17,7 @@ import controls.gait_publisher as publisher
 
 #startPos = [0] * 12
 
-pos_start = [[0, -0.3, 0],[0, -0.3, 0],[0, -0.3, 0],[0, -0.3, 0]]
+pos_start = gaits.Sit().getPos(0)  # Get the initial position for standing
 
 posFL_start = solveIK(pos_start[0])
 posFR_start = solveIK(pos_start[1])
@@ -92,6 +92,8 @@ def GeneratePosition():
             gaitTraj = gaits.TurnInPlaceWithRoll(turnRight=False, logger=trajNode.get_logger())
          case "rightInPlaceWithRoll"|"rwr":
             gaitTraj = gaits.TurnInPlaceWithRoll(turnRight=True, logger=trajNode.get_logger())
+         case "sit" | "si":
+            gaitTraj = gaits.Sit(trajNode.get_logger(), logger=trajNode.get_logger())
 
    curTime = time.time() - startTime
    pos = gaitTraj.getPos(curTime)

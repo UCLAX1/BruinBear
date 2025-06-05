@@ -58,7 +58,8 @@ class FaceDetector():
     def returnRelativePosition(self, center, img):
         width, height = self.getImageDimensions(img)
         if center == None:
-            center_x, center_y = 0, 0
+            return None
+            # center_x, center_y = 0, 0
         else:
             center_x, center_y = center
     

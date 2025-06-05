@@ -9,7 +9,7 @@ from std_msgs.msg import String, Float32MultiArray
 # from collections import deque
 global gait_origin
 global gait 
-gait = 's'
+gait = 'sit'
 global celldata
 global cycle_time
 cycle_time = 10
@@ -100,8 +100,14 @@ average_position = []
 
 def main():
     rclpy.init()
-    # global gaitNode
+    global gait
     gaitNode = gaitPublisher()
+    
+    start = time.time()
+    
+    while time.time() - start < 1:
+      gait = 'sit'
+      gaitNode.pub_gait(gait)
 
     try:
       rclpy.spin(gaitNode)  

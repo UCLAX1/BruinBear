@@ -11,6 +11,7 @@ from roboticstoolbox import mstraj
 import math
 import scipy
 
+TARGET = None
 
 # Patch scipy.randn if missing
 if not hasattr(scipy, 'randn'):
@@ -20,14 +21,64 @@ from roboticstoolbox import mstraj
 
 class Gait:
     def __init__(self, logger = None):
+        global TARGET
         self.logger = logger
         self.totalTrajTime = 0
         self.timeSteps = 0
+        self.dt = 0.01
+        
+        # create a smooth path from the startsFrom position (last set target) to the start of the traj
+        self.startsFrom = TARGET
+        self.startUpTime = 0
+        self.startTrajPos = [[] for _ in range(4)]
+        self.init_start = False
+        
+    def init_start_traj(self):
+        global TARGET
+        self.init_start = True
+        if self.startsFrom is not None:
+            startsAt = self.update(0)
+            for i in range(4):
+                viapoints = np.array([self.startsFrom[i], startsAt[i]])
+                speed = 0.1  # meters per second
+                duration = self.distance(self.startsFrom[i], startsAt[i]) / speed
+                # Make sure duration is at least one dt (so mstraj doesn’t fail)
+                duration = max(duration, self.dt)
+                
+                
+                traj = mstraj(viapoints, self.dt, tacc = self.dt/4, tsegment=[duration])
+                self.startTrajPos[i] = traj.q
+                self.startUpTime = max(self.startUpTime, duration)
+        
     def getPos(self, time):
+        global TARGET
+        
+        if not self.init_start:
+            self.init_start_traj()
+        time = abs(time)
+        if time < self.startUpTime:
+            for i in range(4):
+                # interpolate between the start position and the target position
+                if len(self.startTrajPos[i]) > 0:
+                    step = int ((time/self.startUpTime) * len(self.startTrajPos[i]))
+                    if step < len(self.startTrajPos[i]):
+                        TARGET[i] = self.startTrajPos[i][step]
+                    else:
+                        TARGET[i] = self.startTrajPos[i][-1]
+        else: #regular trajectory following
+            TARGET = self.update(time - self.startUpTime)
+        return TARGET
+    
+    def update(self, time):
         raise NotImplementedError("This method should be overridden by subclasses")
+    
     def findTimeStep(self, t):
         t %= self.totalTrajTime
         return math.floor((t/self.totalTrajTime)*self.timeSteps)
+    
+    def distance(self, pos1, pos2):
+        return np.linalg.norm(np.array(pos1) - np.array(pos2))
+    
     def log(self, msg):
         if self.logger:
             self.logger.info(str(msg))
@@ -36,15 +87,23 @@ class Stand(Gait):
     def __init__(self, logger = None):
         super().__init__(logger)
 
-    def getPos(self, time):
-        return [[0, -0.3, 0],[0, -0.3, 0],[0, -0.3, 0],[0, -0.3, 0]]
+    def update(self, time):
+        return [[0, -0.3, 0]] * 4
+    
+class Sit(Gait):
+    def __init__(self, logger = None):
+        super().__init__(logger)
+
+    def update(self, time):
+        return [[0, -0.15, 0]] * 4
+
 
 class Walk(Gait):
     def __init__(self, logger = None):
         super().__init__(logger)
         width = 0.15
         height = 0.03
-        dt = 0.01
+        self.dt = 0.01
         self.totalTrajTime = 1
         trotting = True
         forwardStrokeTime = self.totalTrajTime/4
@@ -56,30 +115,17 @@ class Walk(Gait):
                             [3*width/4, height+homeY, 0],
                             [width/2, homeY, 0],
                             [0, homeY, 0]])
-
-        # viapoints = np.array([[0, homeY, 0],
-        #                     [-width/2, homeY, 0],
-        #                     [0, height+homeY, 0],
-        #                     [width/2, homeY, 0],
-        #                     [0, homeY, 0]])
         
         time_segments = [backStrokeTime/2, forwardStrokeTime/2, forwardStrokeTime/4, forwardStrokeTime/4, backStrokeTime/2]
-        # time_segments = [backStrokeTime/2, forwardStrokeTime/2, forwardStrokeTime/2, backStrokeTime/2]
-        traj = mstraj(viapoints, dt, tacc = dt/4, tsegment = time_segments)
+        traj = mstraj(viapoints, self.dt, tacc = self.dt/4, tsegment = time_segments)
         self.positions = traj.q
         self.timeSteps = len(self.positions)
 
-    def getPos(self, time):
+    def update(self, time):
         tFL = (time)
         tFR = (time - self.totalTrajTime/2)
         tBR = (time)
         tBL = (time - self.totalTrajTime/2)
-    # def getPos(self, time):
-
-    #     tFL = (time)
-    #     tBR = (time - self.totalTrajTime/4)
-    #     tFR = (time- self.totalTrajTime/2)  
-    #     tBL = (time - 3*self.totalTrajTime/4)
     
         return [self.positions[self.findTimeStep(tFL)],
                 self.positions[self.findTimeStep(tFR)],
@@ -94,7 +140,7 @@ class WalkTurn(Gait):
         width_long = 0.14
         width_short = 0.08
         height = 0.03
-        dt = 0.01
+        self.dt = 0.01
         self.totalTrajTime = 1
         forwardStrokeTime = self.totalTrajTime/4
         backStrokeTime = (3*self.totalTrajTime)/4
@@ -115,13 +161,13 @@ class WalkTurn(Gait):
 
         time_segments = [backStrokeTime/2, forwardStrokeTime/2, forwardStrokeTime/4, forwardStrokeTime/4, backStrokeTime/2]
 
-        traj_long = mstraj(viapoints_long, dt, tacc = dt/4, tsegment = time_segments)
-        traj_short = mstraj(viapoints_short, dt, tacc = dt/4, tsegment = time_segments)
+        traj_long = mstraj(viapoints_long, self.dt, tacc = self.dt/4, tsegment = time_segments)
+        traj_short = mstraj(viapoints_short, self.dt, tacc = self.dt/4, tsegment = time_segments)
         self.positions_long = traj_long.q
         self.positions_short = traj_short.q
         self.timeSteps = len(self.positions_long)
 
-    def getPos(self, time):
+    def update(self, time):
         tFL = (time)
         tFR = (time - self.totalTrajTime/2)
         tBR = (time)
@@ -145,7 +191,7 @@ class TurnInPlaceNoRoll(Gait):
         self.turnRight = turnRight
         width = 0.08
         height = 0.02
-        dt = 0.01
+        self.dt = 0.01
         self.totalTrajTime = 1
         forwardStrokeTime = self.totalTrajTime/2
         backStrokeTime = self.totalTrajTime/2
@@ -167,13 +213,13 @@ class TurnInPlaceNoRoll(Gait):
 
         time_segments = [backStrokeTime/2, forwardStrokeTime/2, forwardStrokeTime/4, forwardStrokeTime/4, backStrokeTime/2]
 
-        traj_forward = mstraj(viapoints_forward, dt, tacc = dt/4, tsegment = time_segments)
-        traj_backward = mstraj(viapoints_backward, dt, tacc = dt/4, tsegment = time_segments)
+        traj_forward = mstraj(viapoints_forward, self.dt, tacc = self.dt/4, tsegment = time_segments)
+        traj_backward = mstraj(viapoints_backward, self.dt, tacc = self.dt/4, tsegment = time_segments)
         self.positions_forward = traj_forward.q
         self.positions_backward = traj_backward.q
         self.timeSteps = len(self.positions_backward)
 
-    def getPos(self, time):
+    def update(self, time):
         tFL = (time)
         tFR = (time - self.totalTrajTime/2)
         tBR = (time)
@@ -197,7 +243,7 @@ class WalkBackward(Gait):
         super().__init__(logger)
         width = 0.15
         height = 0.03
-        dt = 0.01
+        self.dt = 0.01
         self.totalTrajTime = 2
         trotting = True
         forwardStrokeTime = self.totalTrajTime/4
@@ -209,30 +255,17 @@ class WalkBackward(Gait):
                             [-3*width/4, height+homeY, 0],
                             [-width/2, homeY, 0],
                             [0, homeY, 0]])
-
-        # viapoints = np.array([[0, homeY, 0],
-        #                     [-width/2, homeY, 0],
-        #                     [0, height+homeY, 0],
-        #                     [width/2, homeY, 0],
-        #                     [0, homeY, 0]])
         
         time_segments = [backStrokeTime/2, forwardStrokeTime/2, forwardStrokeTime/4, forwardStrokeTime/4, backStrokeTime/2]
-        # time_segments = [backStrokeTime/2, forwardStrokeTime/2, forwardStrokeTime/2, backStrokeTime/2]
-        traj = mstraj(viapoints, dt, tacc = dt/4, tsegment = time_segments)
+        traj = mstraj(viapoints, self.dt, tacc = self.dt/4, tsegment = time_segments)
         self.positions = traj.q
         self.timeSteps = len(self.positions)
 
-    def getPos(self, time):
+    def update(self, time):
         tFL = (time)
         tFR = (time - self.totalTrajTime/2)
         tBR = (time)
         tBL = (time - self.totalTrajTime/2)
-    # def getPos(self, time):
-
-    #     tFL = (time)
-    #     tBR = (time - self.totalTrajTime/4)
-    #     tFR = (time- self.totalTrajTime/2)  
-    #     tBL = (time - 3*self.totalTrajTime/4)
     
         return [self.positions[self.findTimeStep(tFL)],
                 self.positions[self.findTimeStep(tFR)],
@@ -244,7 +277,7 @@ class Trot(Gait):
         super().__init__(logger)
         width = 0.13
         height = 0.03
-        dt = 0.01
+        self.dt = 0.01
         self.totalTrajTime = 1
         trotting = True
         forwardStrokeTime = self.totalTrajTime/2
@@ -258,11 +291,11 @@ class Trot(Gait):
                             [0, homeY, 0]])
         
         time_segments = [backStrokeTime/2, forwardStrokeTime/2, forwardStrokeTime/4, forwardStrokeTime/4, backStrokeTime/2]
-        traj = mstraj(viapoints, dt, tacc = dt/4, tsegment = time_segments)
+        traj = mstraj(viapoints, self.dt, tacc = self.dt/4, tsegment = time_segments)
         self.positions = traj.q
         self.timeSteps = len(self.positions)
 
-    def getPos(self, time):
+    def update(self, time):
         tFL = (time)
         tFR = (time - self.totalTrajTime/2)
         tBR = (time)
@@ -279,7 +312,7 @@ class TurnInPlaceWithRoll(Gait):
         self.turnRight = turnRight
         width = 0.1
         height = 0.03
-        dt = 0.01
+        self.dt = 0.01
         self.totalTrajTime = 1
         trotting = True
         forwardStrokeTime = self.totalTrajTime/2
@@ -301,13 +334,13 @@ class TurnInPlaceWithRoll(Gait):
                             [xPos, homeY, 0]])
         
         time_segments = [backStrokeTime/2, forwardStrokeTime/2, forwardStrokeTime/2, backStrokeTime/2]
-        traj1 = mstraj(viapoints1, dt, tacc = dt/4, tsegment = time_segments)
-        traj2 = mstraj(viapoints2, dt, tacc = dt/4, tsegment = time_segments)
+        traj1 = mstraj(viapoints1, self.dt, tacc = self.dt/4, tsegment = time_segments)
+        traj2 = mstraj(viapoints2, self.dt, tacc = self.dt/4, tsegment = time_segments)
         self.positions1 = traj1.q 
         self.positions2 = traj2.q 
         self.timeSteps = len(self.positions1)
 
-    def getPos(self, time):
+    def update(self, time):
         tFL = (time)
         tFR = (time - self.totalTrajTime/2)
         tBR = (time)
