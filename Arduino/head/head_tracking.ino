@@ -22,8 +22,8 @@ void loop() {
     int rightTiltValue = Serial.read(); // Second byte for right tilt servo
     
     // Constrain values to valid servo range (0-180)
-    leftTiltValue = constrain(leftTiltValue, 0, 180);
-    rightTiltValue = constrain(rightTiltValue, 0, 180);
+    leftTiltValue = constrain(leftTiltValue, 1, 60);
+    rightTiltValue = constrain(rightTiltValue, 120, 180);
     
     // Control the tilt servos directly
     headServos.setTiltPosition(leftTiltValue, rightTiltValue);

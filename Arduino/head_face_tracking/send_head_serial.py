@@ -103,7 +103,8 @@ def runCamera():
         relative = detector.returnRelativePosition(center, img)
         #print(relative)
         returnSignal = detector.returnSignal(relative)
-        # print(returnSignal)
+        print(returnSignal)
+        print(headSerialController.convertCoords(returnSignal))
 
         headSerialController.send_command(returnSignal)
         
