@@ -9,7 +9,7 @@ from scipy.spatial.transform import Rotation as R
 class Sim:
     def __init__(self, startPos, displayRefreshRate = 30):
         
-        modelPath = 'ros2_ws/quadruped-new/quadruped.xml'
+        modelPath = 'quadruped/quadruped.xml'
         self.displayRefreshRate = displayRefreshRate
         self.joints = startPos
 
@@ -58,47 +58,57 @@ class Sim:
     
     # Update positions and self.scene and render
     def update(self, joints):
-        if self.is_running():
-            time_prev = self.data.time
-
-            while self.data.time - time_prev < 1.0/self.displayRefreshRate:
-                self.data.ctrl[self.FLH] = joints[0]
-                self.data.ctrl[self.FRH] = joints[1]
-                self.data.ctrl[self.BRH] = joints[2]
-                self.data.ctrl[self.BLH] = joints[3]
-                self.data.ctrl[self.FLK] = joints[4]
-                self.data.ctrl[self.FRK] = joints[5]
-                self.data.ctrl[self.BRK] = joints[6]
-                self.data.ctrl[self.BLK] = joints[7]
-                self.data.ctrl[self.FLR] = joints[8]
-                self.data.ctrl[self.FRR] = joints[9]
-                self.data.ctrl[self.BRR] = joints[10]
-                self.data.ctrl[self.BLR] = joints[11]
-                
-                mj.mj_step(self.model, self.data)
-
-            viewport_width, viewport_height = glfw.get_framebuffer_size(
-                self.window)
-            viewport = mj.MjrRect(0, 0, viewport_width, viewport_height)
-
-            smoothing_factor = 0.1
-            robot_x = self.data.xpos[1][0]  # X-coordinate of the robot
-            robot_y = self.data.xpos[1][1]  # Y-coordinate of the robot 
-            self.cam.lookat = [robot_x, robot_y, 0.2]
-
-            mj.mjv_updateScene(self.model, self.data, self.opt, None, self.cam,
-                            mj.mjtCatBit.mjCAT_ALL.value, self.scene)
-            mj.mjr_render(viewport, self.scene, self.context)
-
-            # swap OpenGL buffers (blocking call due to v-sync)
-            glfw.swap_buffers(self.window)
-
-            # process pending GUI events, call GLFW callbacks
-            glfw.poll_events()
-        else:
+        if not self.is_running():
             self.close()
-            
-        return self.is_running()
+            return False
+
+        # Set joint positions
+        self.data.ctrl[self.FLH] = joints[0]
+        self.data.ctrl[self.FRH] = joints[1]
+        self.data.ctrl[self.BRH] = joints[2]
+        self.data.ctrl[self.BLH] = joints[3]
+        self.data.ctrl[self.FLK] = joints[4]
+        self.data.ctrl[self.FRK] = joints[5]
+        self.data.ctrl[self.BRK] = joints[6]
+        self.data.ctrl[self.BLK] = joints[7]
+        self.data.ctrl[self.FLR] = joints[8]
+        self.data.ctrl[self.FRR] = joints[9]
+        self.data.ctrl[self.BRR] = joints[10]
+        self.data.ctrl[self.BLR] = joints[11]
+
+        # Step simulation forward to catch up with wall-clock time
+        current_time = time.time()
+        if not hasattr(self, 'last_update_walltime'):
+            self.last_update_walltime = current_time
+
+        elapsed = current_time - self.last_update_walltime
+        timestep = self.model.opt.timestep  # usually 0.001
+
+        n_steps = int(elapsed / timestep)
+
+        for _ in range(n_steps):
+            mj.mj_step(self.model, self.data)
+
+        self.last_update_walltime += n_steps * timestep
+
+        # Render the frame
+        viewport_width, viewport_height = glfw.get_framebuffer_size(self.window)
+        viewport = mj.MjrRect(0, 0, viewport_width, viewport_height)
+
+        robot_x = self.data.xpos[1][0]
+        robot_y = self.data.xpos[1][1]
+        self.cam.lookat = [robot_x, robot_y, 0.2]
+
+        mj.mjv_updateScene(self.model, self.data, self.opt, None, self.cam,
+                        mj.mjtCatBit.mjCAT_ALL.value, self.scene)
+        mj.mjr_render(viewport, self.scene, self.context)
+
+        # Swap buffers and handle GUI events
+        glfw.swap_interval(0) # Disable vsync for smoother rendering and doesn't get stuck when minimzed
+        glfw.swap_buffers(self.window)
+        glfw.poll_events()
+        
+        return True
             
     def is_running(self):
         return not glfw.window_should_close(self.window)

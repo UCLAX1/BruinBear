@@ -56,7 +56,7 @@ class Hip:
         # Calculate the error
         error = self.target_position - self.current_position
         
-        print ("target", self.target_position)
+        # print ("target", self.target_position)
         
         # PID calculations
         proportional = self.kp * error
@@ -74,7 +74,7 @@ class Hip:
     
     def apply_motor_power(self, power):
         self.motor_power = max(-self.MAX_POWER, min(self.MAX_POWER, power))
-        print ('setting power: ', self.motor_power)
+        # print ('setting power: ', self.motor_power)
         self.motor.set_power(self.motor_power)
         self.motor.send_heartbeat()
         

@@ -1,0 +1,162 @@
+<mujoco model="quadruped">
+    <compiler angle="radian" />
+
+    <!-- Settings -->
+    <option timestep = "0.001"/> 
+    <option gravity="0 0 -9.80"/>
+
+    <asset>
+        <!-- CAD Meshes -->
+        <mesh name="Body-v4" file="meshes/Body-v4.stl" scale="0.001 0.001 0.001" />
+        <mesh name="FL-Roll" file="meshes/FL-Roll.stl" scale="0.001 0.001 0.001" />
+        <mesh name="BL-Roll" file="meshes/BL-Roll.stl" scale="0.001 0.001 0.001" />
+        <mesh name="BR-Roll" file="meshes/BR-Roll.stl" scale="0.001 0.001 0.001" />
+        <mesh name="FR-Roll" file="meshes/FR-Roll.stl" scale="0.001 0.001 0.001" />
+        <mesh name="FL-Upper" file="meshes/FL-Upper.stl" scale="0.001 0.001 0.001" />
+        <mesh name="BR-Upper" file="meshes/BR-Upper.stl" scale="0.001 0.001 0.001" />
+        <mesh name="FR-Upper" file="meshes/FR-Upper.stl" scale="0.001 0.001 0.001" />
+        <mesh name="BL-Upper" file="meshes/BL-Upper.stl" scale="0.001 0.001 0.001" />
+        <mesh name="FL-Lower" file="meshes/FL-Lower.stl" scale="0.001 0.001 0.001" />
+        <mesh name="BR-Lower" file="meshes/BR-Lower.stl" scale="0.001 0.001 0.001" />
+        <mesh name="BL-Lower" file="meshes/BL-Lower.stl" scale="0.001 0.001 0.001" />
+        <mesh name="FR-Lower" file="meshes/FR-Lower.stl" scale="0.001 0.001 0.001" />
+
+          <!-- World Files -->
+        <texture type="skybox" builtin="gradient" rgb1=".3 .5 .7" rgb2="0 0 0" width="32" height="512"/>
+        <texture name="grid" type="2d" builtin="checker" width="512" height="512" rgb1=".1 .2 .3" rgb2=".2 .3 .4"/>
+        <material name="grid" texture="grid" texrepeat="1 1" texuniform="true" reflectance=".0"/>
+    </asset>
+
+    <worldbody>
+        <!-- World Plane -->
+        <geom name="floor" size="0 0 .05" type="plane" material="grid" friction = "0.1 0.005 0.0001"/>
+        <light name="spotlight" mode="targetbodycom" target="Body-v4" diffuse=".8 .8 .8" specular="0.3 0.3 0.3" pos="0 -6 4" cutoff="30"/>
+        <light name="top" pos="0 0 2" mode="trackcom"/>
+
+        <!-- Wrapper to fix incorrect robot orientation -->
+        <body name="wrapper" pos="0 0 0" euler="1.57 0 0">
+            <!-- Enables Gravity for the Body -->
+            <joint type = "free"/> 
+
+            <!-- Parent Body -->
+            <body name="Body-v4" pos="0.0 0.5 0.0" euler="-0.0 0.0 -0.0">
+
+                <!-- Chassis -->
+                <geom name="Body-v4_geom" type="mesh" mesh="Body-v4" pos="0 0 0" euler="0 0 0" contype="0" conaffinity="0"/>
+                <inertial mass="45.84029276864545" pos="-9.96787128906073e-17 -0.003343980902013922 1.4951806933591095e-16" fullinertia="1.4694385869918294 2.0400454550107257 0.5894668869416125 -6.244225368830321e-16 -7.310882210731513e-16 1.5985257043432564e-16" />
+                
+                <!-- Front Left Leg -->
+                <body name="FL-Roll" pos="0.17032500000000006 -0.04349999999999993 0.3149999999999999" euler="-4.1171477459363345e-18 6.106970808913534e-16 -4.4235448637408593e-17">
+                    <!-- Roll -->
+                    <joint name="FL-Roll" type="hinge" axis="-5.565028236319728e-17 2.0450221431990946e-17 0.9999999999999993" pos="-0.017000000000000067 -7.003869055874827e-17 0.005000000000000102" damping = '5.0'/>
+                    <geom name="FL-Roll_geom" type="mesh" mesh="FL-Roll" pos="0 0 0" euler="0 0 0" contype="0" conaffinity="0"/>
+                    <inertial mass="0.4189468591609545" pos="0.01673178873139079 2.7385490772042842e-17 -1.5799357816125868e-14" fullinertia="0.0001052573405092016 0.0003102881428389062 0.00038256321163623994 -4.290247633143922e-19 2.1861814857291952e-16 9.101004517584109e-21" />
+                    <body name="FL-Upper" pos="0.04799999999999994 -0.08766000000000007 0.0" euler="9.856909455373869e-30 -4.469275915283205e-16 9.887923813067248e-17">
+                        <!-- Hip -->
+                        <joint name="FL-Hip" type="hinge" axis="-1.0 0.0 0.0" pos="0.00900000000000001 0.08766000000000002 1.1285713703819086e-16" damping = '5.0'/>
+                        <geom name="FL-Upper_geom" type="mesh" mesh="FL-Upper" pos="0 0 0" euler="0 0 0" contype="0" conaffinity="0"/>
+                        <inertial mass="0.656796201692126" pos="0.004499999999999994 0.005443407521120919 1.5279284621603655e-07" fullinertia="0.00250121765541897 0.00011893828443833304 0.002391146119703479 3.3328742389029874e-18 1.4154342987183606e-17 -2.434342002659418e-09" />
+                        <body name="FL-Lower" pos="-0.010999999999999979 -0.1413400000000001 -0.017000000000000313" euler="-1.987559702607628e-31 -9.077239102218107e-16 -7.407269242420906e-16">
+                            <!-- Knee -->
+                            <joint name="FL-Knee" type="hinge" axis="-1.0 0.0 0.0" pos="0.01999999999999999 0.0490000000000001 0.017000000000000383" damping = '5.0'/>
+                            <geom name="FL-Lower_geom" type="mesh" mesh="FL-Lower" pos="0 0 0" euler="0 0 0"/>
+                            <inertial mass="1.3801921676244104" pos="0.005178681684602608 -0.039221034749434155 0.00025447539766176007" fullinertia="0.010132287925279426 0.000305671205903551 0.009974346394442772 -2.1756629219001036e-05 -4.1296979303659804e-06 3.233235283689448e-05" />
+                        </body>
+                    </body>
+                </body>
+
+                <!-- Front Right Leg -->
+                <body name="FR-Roll" pos="-0.17032500000000006 -0.04350000000000003 0.3149999999999999" euler="9.860761315262783e-32 -1.8934488442209066e-15 -3.141592653589793">
+                    <!-- Roll -->
+                    <joint name="FR-Roll" type="hinge" axis="1.7208456881689936e-15 3.5361554985355845e-17 -1.0000000000000004" pos="-0.01700000000000008 -3.090199859404967e-17 0.005000000000000086" damping = '5.0'/>
+                    <geom name="FR-Roll_geom" type="mesh" mesh="FR-Roll" pos="0 0 0" euler="0 0 0" contype="0" conaffinity="0"/>
+                    <inertial mass="0.4189468591609545" pos="0.016731788731390796 2.273869773033821e-17 -1.5777895084627036e-14" fullinertia="0.00010525734050920171 0.00031028814283890686 0.00038256321163624254 4.471039882797507e-19 2.1811612510961446e-16 -1.3528030043699539e-20" />
+                    <body name="FR-Upper" pos="0.04800000000000019 0.08765999999999993 0.0" euler="3.141592653589793 2.0725495138097333e-16 3.281960866763577e-16">
+                        <!-- Hip -->
+                        <joint name="FR-Hip" type="hinge" axis="1.0 0.0 0.0" pos="0.00899999999999982 0.0876600000000001 -2.2648509611926445e-16" damping = '5.0'/>
+                        <geom name="FR-Upper_geom" type="mesh" mesh="FR-Upper" pos="0 0 0" euler="0 0 0" contype="0" conaffinity="0"/>
+                        <inertial mass="0.656796201692126" pos="0.004499999999999992 0.005443407521120919 1.5279284613730159e-07" fullinertia="0.0025012176554189665 0.00011893828443834692 0.0023911461197034757 3.247120417958202e-18 -1.0274474347804119e-19 -2.4343419922369053e-09" />
+                        <body name="FR-Lower" pos="-0.0010000000000001564 -0.14134 0.016999999999999956" euler="-3.141592653589793 3.4118113931164244e-16 3.141592653589793">
+                            <!-- Knee -->
+                            <joint name="FR-Knee" type="hinge" axis="-1.0 0.0 0.0" pos="-0.009999999999999946 0.049000000000000134 0.017000000000000178" damping = '5.0'/>
+                            <geom name="FR-Lower_geom" type="mesh" mesh="FR-Lower" pos="0 0 0" euler="0 0 0" />
+                            <inertial mass="1.3801921676244127" pos="0.004821318370867442 -0.0392210347494341 0.0002544753976244151" fullinertia="0.010132287925121962 0.0003056712060088286 0.009974346394234807 2.175663586275058e-05 4.129697949589105e-06 3.233235284144376e-05" />
+                        </body>
+                    </body>
+                </body>
+                
+                <!-- Back Left Leg -->
+                <body name="BL-Roll" pos="0.17032500000000014 -0.04349999999999993 -0.3150000000000003" euler="-4.993078744984396e-31 1.2849615757339187e-15 6.66133814775088e-16">
+                    <!-- Roll -->
+                    <joint name="BL-Roll" type="hinge" axis="-1.3322676295501886e-15 7.728447073901571e-16 0.9999999999999993" pos="-0.017000000000000143 -6.192888772484623e-17 -0.004999999999999745" damping = '5.0'/>
+                    <geom name="BL-Roll_geom" type="mesh" mesh="BL-Roll" pos="0 0 0" euler="0 0 0" contype="0" conaffinity="0"/>
+                    <inertial mass="0.4189468591609545" pos="0.01673178873139079 1.549974233533937e-17 -1.5752549028261082e-14" fullinertia="0.00010525734050918773 0.0003102881428389128 0.00038256321163624514 -7.011547376629442e-20 2.2167017998002962e-16 2.95661953355105e-19" />
+                    <body name="BL-Upper" pos="0.04799999999999994 -0.08766000000000013 2.1316282072803005e-16" euler="-2.6561357463856055e-30 4.7306053816270855e-17 -6.661338147750898e-16">
+                        <!-- Hip -->
+                        <joint name="BL-Hip" type="hinge" axis="-1.0 0.0 0.0" pos="0.008999999999999897 0.08766000000000006 2.895461648222412e-16" damping = '5.0'/>
+                        <geom name="BL-Upper_geom" type="mesh" mesh="BL-Upper" pos="0 0 0" euler="0 0 0" contype="0" conaffinity="0"/>
+                        <inertial mass="0.656796201692126" pos="0.004499999999999993 0.0054434075211209215 1.5279284618574539e-07" fullinertia="0.002501217655418997 0.0001189382844383609 0.0023911461197034835 3.243195035029617e-24 -6.792249159938571e-18 -2.43434199187487e-09" />
+                        <body name="BL-Lower" pos="-0.0009999999999850573 -0.14134000000000305 0.017000000000000206" euler="-3.141592653589793 3.229510657371792e-16 3.141592653589488">
+                            <!-- Knee -->
+                            <joint name="BL-Knee" type="hinge" axis="1.0 0.0 0.0" pos="-0.0099999999999999 0.04900000000000004 0.016999999999999946" damping = '5.0' />
+                            <geom name="BL-Lower_geom" type="mesh" mesh="BL-Lower" pos="0 0 0" euler="0 0 0" />
+                            <inertial mass="1.3801921676244127" pos="0.004821318370867486 -0.03922103474943402 0.0002544753976244251" fullinertia="0.01013228792512201 0.00030567120600884137 0.009974346394234904 2.1756635862724212e-05 4.129697949579552e-06 3.23323528414656e-05" />
+                        </body>
+                    </body>
+                </body>
+
+                <!-- Back Right Leg -->
+                <body name="BR-Roll" pos="-0.17032500000000003 -0.04349999999999997 -0.3150000000000003" euler="-3.141592653589793 1.0411543144223803e-17 3.141592653589793">
+                    <!-- Roll -->
+                    <joint name="BR-Roll" type="hinge" axis="1.0408340855860841e-17 2.269768243771719e-19 0.9999999999999998" pos="-0.017000000000000036 -2.964281020226885e-17 0.004999999999999726" damping = '5.0' />
+                    <geom name="BR-Roll_geom" type="mesh" mesh="BR-Roll" pos="0 0 0" euler="0 0 0" />
+                    <inertial mass="0.4189468591609545" pos="0.016731788731390786 2.8503929004626985e-17 -1.5738695800826473e-14" fullinertia="0.00010525734050919464 0.0003102881428388919 0.000382563211636242 -2.6307294071093923e-20 2.185780439300412e-16 -8.672749050054778e-19" />
+                    <body name="BR-Upper" pos="0.04800000000000022 -0.08765999999999995 2.1316282072803005e-16" euler="-2.2954606022338827e-32 2.077362697255768e-16 3.2168278457638773e-16">
+                        <!-- Hip -->
+                        <joint name="BR-Hip" type="hinge" axis="1.0 0.0 0.0" pos="0.008999999999999795 0.08765999999999974 -4.978244385420871e-16" damping = '5.0'/>
+                        <geom name="BR-Upper_geom" type="mesh" mesh="BR-Upper" pos="0 0 0" euler="0 0 0" />
+                        <inertial mass="0.656796201692126" pos="0.004499999999999988 0.0054434075211209085 1.5279284614511054e-07" fullinertia="0.002501217655418978 0.00011893828443837421 0.0023911461197034687 -5.017133673283606e-19 5.184394411482385e-19 -2.4343419981682014e-09" />
+                        <body name="BR-Lower" pos="-0.010999999999999944 -0.14134000000000016 -0.01700000000000003" euler="2.901452603295771e-32 1.3776932172625623e-16 6.070401644179534e-15">
+                            <!-- Knee -->
+                            <joint name="BR-Knee" type="hinge" axis="1.0 0.0 0.0" pos="0.019999999999999872 0.048999999999999586 0.016999999999999505" damping = '5.0'/>
+                            <geom name="BR-Lower_geom" type="mesh" mesh="BR-Lower" pos="0 0 0" euler="0 0 0" />
+                            <inertial mass="1.3801921676244104" pos="0.005178681684602642 -0.0392210347494341 0.0002544753976618367" fullinertia="0.010132287925279315 0.00030567120590346765 0.009974346394442758 -2.1756629218986437e-05 -4.129697930326424e-06 3.2332352836862403e-05" />
+                        </body>
+                    </body>
+                </body>
+
+            <!-- Parent Body End -->
+            </body>
+
+        <!-- Wrapper Body End -->
+        </body>
+
+    <!-- Worldbody End -->
+    </worldbody>
+
+         <!-- motors -->
+    <actuator>
+        <!-- Front Right -->
+        <position name="FR-H-servo" joint = "FR-Hip" kp = '500'/>
+        <position name="FR-K-servo" joint = "FR-Knee" kp = "500"/>
+        <position name="FR-R-servo" joint = "FR-Roll" kp = '500'/>
+
+        <!-- Front Left -->
+        <position name="FL-H-servo" joint = "FL-Hip" kp = '500'/>
+        <position name="FL-K-servo" joint = "FL-Knee" kp = "500"/>
+        <position name="FL-R-servo" joint = "FL-Roll" kp = '500'/>
+
+
+        <!-- Back Right -->
+        <position name="BR-H-servo" joint = "BR-Hip" kp = '500'/>
+        <position name="BR-K-servo" joint = "BR-Knee" kp = "500"/>
+        <position name="BR-R-servo" joint = "BR-Roll" kp = '500'/>
+
+
+        <!-- Back Left -->
+        <position name="BL-H-servo" joint = "BL-Hip" kp = '500'/>
+        <position name="BL-K-servo" joint = "BL-Knee" kp = "500"/>
+        <position name="BL-R-servo" joint = "BL-Roll" kp = '500'/>
+
+    </actuator>
+</mujoco>

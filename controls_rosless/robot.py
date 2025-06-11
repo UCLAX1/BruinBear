@@ -25,7 +25,7 @@ class Robot ():
       if self.useSim:
          self.sim = Sim(self.joint_positions)
       if self.useMotors:
-         self.leg_controller = LegController(useFL=False)
+         self.leg_controller = LegController(useFL=False, useBL=False, useBR=False)
       
       self.last_update_time = time.time()
 
@@ -80,10 +80,12 @@ class Robot ():
          self.leg_controller.update(self.joint_positions)
       
       #track cycle time
-      now = time.time()
-      cycle_time = now - self.last_update_time
-      print(f"Cycle time: {cycle_time:.4f} seconds")
-      self.last_update_time = now
+      if (self.cycle % 100 == 0):
+         now = time.time()
+         cycle_time = (now - self.last_update_time)/100
+         print(f"Cycle {self.cycle} completed in {cycle_time:.4f} seconds")
+         self.last_update_time = now
+      self.cycle += 1
       
          
       

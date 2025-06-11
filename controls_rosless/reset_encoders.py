@@ -5,9 +5,7 @@ import time
 bus = CanBus()
 bus.start()
 
-# motor_ids = [1, 4, 7, 10] #hips
-motor_ids = [7, 8, 9] #knees
-# motor_ids = [3, 6, 9, 12] #roll
+motor_ids = [4, 5, 6]
 
 for i in motor_ids:
     motor = Motor(bus, i)

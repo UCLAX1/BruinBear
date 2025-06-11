@@ -37,17 +37,12 @@ def solveIK(t, backLeg=False):
     phi = np.arccos(np.sqrt(ty**2+tx**2)/dT)
     if(tz < 0):
         phi *= -1
-    print ("phi", phi)
-    print ("ty", ty)
-    print ("dT", dT)
+    # print ("phi", phi)
+    # print ("ty", ty)
+    # print ("dT", dT)
 
 
 
-    # print(np.rad2deg(knee))
-    if (dT > r1+r1):
-        print ("target too far")
-    elif knee > np.deg2rad(60):
-        print('knee out of range')
     # print("phi: " + str(phi))
     return hip, knee, phi
 
