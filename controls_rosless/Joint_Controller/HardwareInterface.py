@@ -3,6 +3,7 @@ import can
 import os
 import json
 import time
+import threading
 
 class ProcessEncoderData(can.Listener):
     STATUS_2 = 0x2051880
@@ -74,6 +75,7 @@ class Motor:
         self.can_bus = can_bus
         self.motor_id = motor_id
         self.logger = logger
+        self._desired_power = 0
         
         # load initial pos
         self.init_pos = 0
@@ -95,23 +97,45 @@ class Motor:
         self.log(f"motor connected {self.motor_id}")
         self.log(f"current motor position {self.get_pos()}")
 
+        self._running = True 
+        self._update_thread = threading.Thread(target=self._control_loop, daemon=True)
+        self._update_thread.start()
+        
+    def _control_loop(self):
+        rate = 1.0 / 50  # 50 Hz update
+        while self._running:
+            self._send_power(self._desired_power)
+            time.sleep(rate)
+            
+    def _send_power(self, power):
+        msg_id = self.Duty_Cycle_ID + self.motor_id
+        power = max(-1, min(power, 1))
+        power *= self.MAX_DUTY_CYCLE
+        duty_data = struct.pack('<f', power)
+        data = bytearray(8)
+        data[:4] = duty_data
+        self.can_bus.send_message(msg_id, data)
+        
+    def set_power(self, power):
+        self._desired_power = power  # Just update the desired power
+
     def log(self, msg):
         if self.logger:
             self.logger.info(str(msg))
         else:
             print(str(msg))
         
-    def set_power(self, power: float):
-        msg_id = self.Duty_Cycle_ID + self.motor_id
+    # def set_power(self, power: float):
+    #     msg_id = self.Duty_Cycle_ID + self.motor_id
         
-        power = max(-1, min(power, 1))  # Clamp power to 0-1 range
-        power = power * self.MAX_DUTY_CYCLE # Normalize power to duty cycle range
+    #     power = max(-1, min(power, 1))  # Clamp power to 0-1 range
+    #     power = power * self.MAX_DUTY_CYCLE # Normalize power to duty cycle range
         
-        duty_data = struct.pack('<f', power)
-        data = bytearray(8)
-        data[:4] = duty_data
+    #     duty_data = struct.pack('<f', power)
+    #     data = bytearray(8)
+    #     data[:4] = duty_data
         
-        self.can_bus.send_message(msg_id, data)
+    #     self.can_bus.send_message(msg_id, data)
         
     def send_heartbeat(self):
         msg_id = self.Heartbeat_ID + self.motor_id
@@ -138,6 +162,10 @@ class Motor:
 
         with open(self.INIT_POS_FILE, "w") as f:
             json.dump(data, f, indent=2)
+            
+        def __del__(self):
+            self._running = False
+            self._update_thread.join()
         
 
         
