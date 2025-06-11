@@ -25,7 +25,7 @@ class Robot ():
       if self.useSim:
          self.sim = Sim(self.joint_positions)
       if self.useMotors:
-         self.leg_controller = LegController()
+         self.leg_controller = LegController(useFL=False)
       
       self.last_update_time = time.time()
 

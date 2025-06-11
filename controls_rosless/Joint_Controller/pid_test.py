@@ -1,13 +1,8 @@
-try: 
-    from controls_rosless.Joint_Controller.HardwareInterface import CanBus, Motor
-    from controls_rosless.Joint_Controller.hip import Hip
-    from controls_rosless.Joint_Controller.knee import Knee
-    from controls_rosless.Joint_Controller.roll import Roll
-except ImportError:
-    from HardwareInterface import CanBus, Motor
-    from hip import Hip
-    from knee import Knee
-    from roll import Roll
+
+from HardwareInterface import CanBus, Motor
+from hip import Hip
+from knee import Knee
+from roll import Roll
 import time
 
 bus = CanBus()

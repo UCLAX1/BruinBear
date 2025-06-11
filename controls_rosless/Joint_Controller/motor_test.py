@@ -1,7 +1,4 @@
-try: 
-    from HardwareInterface import CanBus, Motor
-except ImportError:
-    from controls_rosless.Joint_Controller.HardwareInterface import CanBus, Motor
+from HardwareInterface import CanBus, Motor
     
 import time
 
