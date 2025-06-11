@@ -1,0 +1,16 @@
+mapping of indeces to joints (for reference):
+
+Joint|joint_pos[i] | motor id
+--------------------
+FLH  |      0      | 1
+FRH  |      1      | 4
+BRH  |      2      | 7
+BLH  |      3      | 10
+FLK  |      4      | 2
+FRK  |      5      | 5
+BRK  |      6      | 8
+BLK  |      7      | 11
+FLR  |      8      | 3
+FRR  |      9      | 6
+BRR  |      10     | 9
+BLR  |      11     | 12
